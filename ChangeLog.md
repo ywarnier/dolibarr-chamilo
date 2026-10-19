@@ -5,6 +5,14 @@ All notable changes of the School module. The format follows [Keep a Changelog](
 ## Unreleased
 
 ### Added
+- Students, in their own table: first name, last name, birth date, an optional email, and an active flag. A student gets a Chamilo account with the student role. The username is built from the name with accents folded (`elodie.francois`), with a number added when taken. An inactive student has a deactivated account.
+- The email of a student's account. Chamilo requires one and it must be unique, while a child often has none. Without an address of their own, the account gets the address of the first parent that has one with the username after a plus sign (`parent+leo.doe@example.org`), so the parent receives Chamilo's message to choose a password. When there is no parent address either, `SCHOOL_STUDENT_EMAIL_DOMAIN` gives a placeholder (`leo.doe@school.example`); without it, the student is reported as an error that says how to fix it.
+- Parents. The parents of a student are Dolibarr third parties, with an optional contact, a relation (parent, guardian, other), a payer flag and the share of the cost each pays. A third party's card has a **Children** tab.
+- Parents who follow their children in Chamilo. A parent who is ticked "Follows in Chamilo" gets a Chamilo account of their own, created from a contact with an email, with the human resources manager role, and the relation that makes them follow the child. The account belongs to the contact and is shared by all their children. Stopping the following removes the relation and keeps the account.
+- Enrolment of a student in a course or a session, and its removal, from the student's card.
+- `dolibarr_id` on Chamilo users now holds a typed reference: `user:7` for a teacher, `student:12`, `contact:30` for a parent. A bare number would be ambiguous between the three tables.
+- Settings `SCHOOL_STUDENT_SEND_EMAIL`, `SCHOOL_PARENT_SEND_EMAIL` (default on) and `SCHOOL_STUDENT_EMAIL_DOMAIN`.
+- Table `llx_school_guardian` (the Chamilo account of a parent who follows children).
 - Teachers. A Dolibarr user flagged as an employee can be enabled as a teacher: the module creates the account in Chamilo with the teacher role and nothing else, or links the existing account that has the same email without changing its data or role. The Chamilo username is the Dolibarr login when it is free, and a numbered variant (`jdoe.2`) when it is not. The account follows the Dolibarr user: name, email, phone, and deactivation when the user is disabled. A new `dolibarr_id` extra field on Chamilo users holds the link.
 - Assignment of teachers to courses, and of coaches to the courses of a session, with the removal of teachers who are no longer assigned. Chamilo is read first, because it refuses to subscribe someone who is already there.
 - A trigger that queues the update of a teacher's account when the Dolibarr user is modified, enabled or disabled.
@@ -13,6 +21,8 @@ All notable changes of the School module. The format follows [Keep a Changelog](
 - README, INSTALL, administrator guide and user guide.
 
 ### Changed
+- An email that belongs to a deleted Chamilo account is no longer linked: the account is unusable and keeps its email, so the module reports it instead of linking a dead account.
+- The value of `dolibarr_id` written for teachers is now `user:<id>`. A database that already holds plain ids from an earlier build is corrected by sending the teachers again from the teacher list.
 - `llx_school_course_teacher` and `llx_school_session_teacher` have a `sync_status` column (0 to add in Chamilo, 1 in Chamilo, 3 to remove) instead of `chamilo_link_id`. A database created with an earlier build can be updated by hand:
 
   ```sql
@@ -20,7 +30,7 @@ All notable changes of the School module. The format follows [Keep a Changelog](
   ALTER TABLE llx_school_session_teacher DROP COLUMN chamilo_link_id, ADD COLUMN sync_status smallint DEFAULT 0 NOT NULL;
   ```
 
-  Run "Create the extra fields" again on the setup page to create the new `dolibarr_id` field of Chamilo users.
+  Run "Create the extra fields" again on the setup page to create the new `dolibarr_id` field of Chamilo users. Enabling the module again creates the new `llx_school_guardian` table; the statuses of `llx_school_enrolment.status` (0 to enrol, 1 enrolled, 3 to remove) and of `llx_school_student_parent.chamilo_follow` (0, 1, 2 to stop) are documented in `sql/llx_school.sql`.
 - Minimum Dolibarr version is now 24.0. The module is meant to be driven through Dolibarr's MCP server as well as through its screens.
 - `llx_school_enrolment.fk_class` is removed. Chamilo enrols the members of a class itself when the class is linked to a session, so Dolibarr keeps no class-derived enrolments. A database created with an earlier build can drop the column by hand:
 

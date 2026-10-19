@@ -78,7 +78,10 @@ class modSchool extends DolibarrModules
 		$this->warnings_activation = array();
 		$this->warnings_activation_ext = array();
 		$this->const = array();
-		$this->tabs = array();
+		// "Children" tab on the card of a third party: the students it is a parent of.
+		$this->tabs = array(
+			'thirdparty:+schoolchildren:SchoolChildren:school@school:isModEnabled("school") && $user->hasRight("school", "read"):/school/parent_children.php?socid=__ID__',
+		);
 		$this->dictionaries = array();
 		$this->boxes = array();
 
@@ -168,6 +171,20 @@ class modSchool extends DolibarrModules
 			'mainmenu' => 'school',
 			'leftmenu' => 'schoolcourses',
 			'url' => '/school/course_list.php',
+			'langs' => 'school@school',
+			'position' => 1100 + $r,
+			'enabled' => "isModEnabled('school')",
+			'perms' => $canRead,
+			'target' => '',
+			'user' => 0,
+		);
+		$this->menu[$r++] = array(
+			'fk_menu' => 'fk_mainmenu=school',
+			'type' => 'left',
+			'titre' => 'SchoolStudents',
+			'mainmenu' => 'school',
+			'leftmenu' => 'schoolstudents',
+			'url' => '/school/student_list.php',
 			'langs' => 'school@school',
 			'position' => 1100 + $r,
 			'enabled' => "isModEnabled('school')",

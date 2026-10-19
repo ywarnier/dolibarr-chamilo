@@ -97,6 +97,7 @@ The module needs these features of Chamilo's `master` branch:
 - the external API key authentication;
 - `PATCH` and `DELETE` on `/api/courses/{id}`, for administrators;
 - `GET /api/usergroups/{id}/subscriptions` and `PUT /api/usergroups/{id}/users`, `/sessions`, `/courses`, for administrators;
+- `GET /api/sessions/{id}/students` and `POST /api/sessions/{id}/students/subscribe` and `unsubscribe`, for administrators: enrolment in a session goes through them, because the existing session actions follow a platform setting meant for tutors. Without them, enrolling a student in a session fails with a message asking to update Chamilo; enrolment in a course and everything else work;
 - the fix that keeps a session's course counter right when a course is linked through `/api/session_rel_courses`.
 
 ## Troubleshooting

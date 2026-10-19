@@ -177,4 +177,38 @@ class SchoolLogicTest extends TestCase
 		$this->assertSame(array('add' => array(3), 'remove' => array(1)), schoolIdsDiff(array(2, 3), array(1, 2)));
 		$this->assertSame(array('add' => array(), 'remove' => array()), schoolIdsDiff(array(), array()));
 	}
+
+	public function testAsciiFoldAndNameBasedUsernames(): void
+	{
+		$this->assertSame('Elodie Francois', schoolAsciiFold('Élodie François'));
+		$this->assertSame('Zoe Lukasz Dvorak', schoolAsciiFold('Zoë Łukasz Dvořák'));
+		$this->assertSame('plain', schoolAsciiFold('plain'));
+		// A student has no login: the username comes from the name, accents folded, spaces dropped.
+		$this->assertSame(array('elodie.francois', 'elodie.francois.2'), schoolTeacherUsernameCandidates('', 'Élodie', 'François', 2));
+		$this->assertSame(array('jeanpierre.dupont'), schoolTeacherUsernameCandidates('', 'Jean Pierre', 'Dupont', 1));
+	}
+
+	public function testDolibarrRef(): void
+	{
+		$this->assertSame('user:7', schoolDolibarrRef('user', 7));
+		$this->assertSame('student:12', schoolDolibarrRef('student', 12));
+		$this->assertSame('contact:30', schoolDolibarrRef('contact', 30));
+	}
+
+	public function testStudentEmail(): void
+	{
+		// Own address first.
+		$this->assertSame('leo@kids.org', schoolStudentEmail(' leo@kids.org ', 'jane@example.org', 'leo.doe', 'school.test'));
+		// Else the parent's address with the username after a plus sign.
+		$this->assertSame('jane+leo.doe@example.org', schoolStudentEmail('', 'jane@example.org', 'leo.doe', 'school.test'));
+		// A parent address that already has a tag keeps only its base.
+		$this->assertSame('jane+leo.doe@example.org', schoolStudentEmail('', 'jane+old@example.org', 'leo.doe', ''));
+		// Else a placeholder on the configured domain.
+		$this->assertSame('leo.doe@school.test', schoolStudentEmail('', '', 'leo.doe', 'school.test'));
+		$this->assertSame('leo.doe@school.test', schoolStudentEmail('', 'not an email', 'leo.doe', 'school.test'));
+		// Nothing to build it from.
+		$this->assertSame('', schoolStudentEmail('', '', 'leo.doe', ''));
+		$this->assertSame('', schoolStudentEmail('', 'jane@example.org', '', ''));
+		$this->assertSame('', schoolStudentEmail('', '', 'leo.doe', 'bad domain!'));
+	}
 }

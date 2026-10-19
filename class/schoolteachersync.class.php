@@ -23,6 +23,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__.'/chamilosetup.class.php';
+require_once __DIR__.'/schoolaccount.class.php';
 require_once __DIR__.'/syncqueue.class.php';
 
 /**
@@ -138,6 +139,7 @@ class SchoolTeacherSync
 			return $fail('The Chamilo extra fields are not set up: use "Create the extra fields" on the setup page', false);
 		}
 
+		$account = new SchoolAccount($client);
 		$payload = schoolTeacherPayload(array('firstname' => (string) $t->firstname, 'lastname' => (string) $t->lastname, 'email' => $email, 'phone' => (string) $t->office_phone, 'statut' => (int) $t->statut));
 		$chamiloId = (int) $t->chamilo_user_id;
 		$note = '';
@@ -145,7 +147,7 @@ class SchoolTeacherSync
 		if ($chamiloId <= 0) {
 			// An account with this email may exist already (the person was a student, or was created by hand): link it
 			// instead of creating a duplicate, and leave its data and role alone.
-			$found = $this->findByEmail($client, $email);
+			$found = $account->findByEmail($email);
 			if (!$found['ok']) {
 				return $fail($found['error'], $found['retryable']);
 			}
@@ -157,7 +159,16 @@ class SchoolTeacherSync
 					$note = 'NOTE: linked to an existing Chamilo account that is not a teacher; its role was not changed';
 				}
 			} else {
-				$created = $this->createAccount($client, $t, $email, $sendEmail);
+				$send = $sendEmail ?? (getDolGlobalString('SCHOOL_TEACHER_SEND_EMAIL', '1') !== '0');
+				$created = $account->create(
+					schoolTeacherUsernameCandidates((string) $t->login, (string) $t->firstname, (string) $t->lastname),
+					$email,
+					(string) $t->firstname,
+					(string) $t->lastname,
+					SchoolAccount::STATUS_TEACHER,
+					$send,
+					schoolDolibarrRef('user', (int) $t->fk_user)
+				);
 				if (!$created['ok']) {
 					return $fail($created['error'], $created['retryable']);
 				}
@@ -165,16 +176,16 @@ class SchoolTeacherSync
 				$this->saveChamiloIds($teacherId, $chamiloId, $created['username']);
 			}
 		} else {
-			$res = $client->request('PATCH', '/api/users/'.$chamiloId, array(), $payload);
+			$res = $account->update($chamiloId, $payload);
 			if (!$res['ok']) {
 				$why = $res['status'] === 404 ? 'The Chamilo account no longer exists' : 'Update account: '.$res['error'];
 				return $fail($why, $res['retryable']);
 			}
 		}
 
-		$set = (new ChamiloSetup($client))->setValue($fieldId, $chamiloId, (string) ((int) $t->fk_user));
+		$set = $account->setDolibarrRef($chamiloId, schoolDolibarrRef('user', (int) $t->fk_user));
 		if (!$set['ok']) {
-			return $fail('Extra field dolibarr_id: '.$set['error'], true);
+			return $fail($set['error'], true);
 		}
 
 		$this->db->query("UPDATE ".MAIN_DB_PREFIX."school_teacher SET sync_status = 1, last_sync = '".$this->db->idate(dol_now())."', last_error = ".($note === '' ? 'NULL' : "'".$this->db->escape($note)."'")." WHERE rowid = ".$teacherId);
@@ -272,73 +283,6 @@ class SchoolTeacherSync
 		}
 
 		return $this->result(true, '', false, schoolPayloadHash(array('kind' => $kind, 'id' => $localId, 'rows' => count($rows))));
-	}
-
-	/**
-	 * @param ChamiloClient $client Client
-	 * @param string        $email  Email
-	 * @return array{ok:bool,user:?array<string,mixed>,error:string,retryable:bool}
-	 */
-	private function findByEmail(ChamiloClient $client, string $email): array
-	{
-		$res = $client->request('GET', '/api/users', array('email' => $email, 'itemsPerPage' => 5));
-		if (!$res['ok']) {
-			return array('ok' => false, 'user' => null, 'error' => 'Look up the account: '.$res['error'], 'retryable' => $res['retryable']);
-		}
-		foreach (ChamiloClient::members($res['data']) as $u) {
-			if (is_array($u) && isset($u['id']) && strcasecmp((string) ($u['email'] ?? $email), $email) === 0) {
-				return array('ok' => true, 'user' => $u, 'error' => '', 'retryable' => false);
-			}
-		}
-		return array('ok' => true, 'user' => null, 'error' => '', 'retryable' => false);
-	}
-
-	/**
-	 * Create the account, trying the Dolibarr login first and then numbered variants when a name is taken.
-	 *
-	 * @param ChamiloClient $client    Client
-	 * @param object        $t         Teacher row joined with the Dolibarr user
-	 * @param string        $email     Email
-	 * @param bool|null     $sendEmail See push()
-	 * @return array{ok:bool,id:int,username:string,error:string,retryable:bool}
-	 */
-	private function createAccount(ChamiloClient $client, $t, string $email, ?bool $sendEmail): array
-	{
-		$names = schoolTeacherUsernameCandidates((string) $t->login, (string) $t->firstname, (string) $t->lastname);
-		if (!$names) {
-			return array('ok' => false, 'id' => 0, 'username' => '', 'error' => 'No Chamilo username can be built from this user', 'retryable' => false);
-		}
-		$urlId = getDolGlobalInt('SCHOOL_CHAMILO_ACCESS_URL_ID') ?: $client->accessUrlId();
-		if (!$urlId) {
-			return array('ok' => false, 'id' => 0, 'username' => '', 'error' => 'The Chamilo portal could not be identified: set SCHOOL_CHAMILO_ACCESS_URL_ID', 'retryable' => false);
-		}
-		$send = $sendEmail ?? (getDolGlobalString('SCHOOL_TEACHER_SEND_EMAIL', '1') !== '0');
-
-		foreach ($names as $username) {
-			$res = $client->request('POST', '/api/access_urls/'.$urlId.'/user', array(), array(
-				'username' => $username,
-				'email' => $email,
-				'firstname' => trim((string) $t->firstname),
-				'lastname' => trim((string) $t->lastname),
-				// Status 1 is the teacher status. It is the only role this module ever grants.
-				'status' => 1,
-				'sendEmail' => $send,
-				'extraFields' => array('dolibarr_id' => (string) ((int) $t->fk_user)),
-			));
-			if ($res['ok'] && is_array($res['data'])) {
-				return array('ok' => true, 'id' => (int) ($res['data']['id'] ?? 0), 'username' => (string) ($res['data']['username'] ?? $username), 'error' => '', 'retryable' => false);
-			}
-			$kind = $res['status'] === 409 ? schoolConflictKind($res['error']) : '';
-			if ($kind === 'username') {
-				continue;
-			}
-			if ($kind === 'email') {
-				// Created by someone else between the look-up and now: link it on the next attempt.
-				return array('ok' => false, 'id' => 0, 'username' => '', 'error' => 'An account with this email appeared meanwhile', 'retryable' => true);
-			}
-			return array('ok' => false, 'id' => 0, 'username' => '', 'error' => 'Create account: '.$res['error'], 'retryable' => $res['retryable']);
-		}
-		return array('ok' => false, 'id' => 0, 'username' => '', 'error' => 'All the usernames tried are taken: '.implode(', ', $names), 'retryable' => false);
 	}
 
 	/**

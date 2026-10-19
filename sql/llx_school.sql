@@ -74,7 +74,26 @@ CREATE TABLE llx_school_student (
 	KEY idx_school_student_chamilo (chamilo_user_id)
 ) ENGINE=innodb;
 
+-- A parent who follows children in Chamilo has a Chamilo account of their own (a human resources manager). It belongs
+-- to the person, a contact of the third party, and is shared by all their children.
+CREATE TABLE llx_school_guardian (
+	rowid integer AUTO_INCREMENT PRIMARY KEY,
+	entity integer DEFAULT 1 NOT NULL,
+	fk_socpeople integer NOT NULL,
+	chamilo_user_id integer,
+	chamilo_username varchar(100),
+	sync_status smallint DEFAULT 0 NOT NULL,
+	last_sync datetime,
+	last_error text,
+	datec datetime NOT NULL,
+	tms timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	UNIQUE KEY uk_school_guardian_contact (entity, fk_socpeople),
+	KEY idx_school_guardian_chamilo (chamilo_user_id)
+) ENGINE=innodb;
+
 -- A student has one or more parents (third parties); a parent has several children.
+-- chamilo_follow: 0 does not follow the child in Chamilo, 1 follows, 2 stopped following and the row is deleted once
+-- Chamilo has been told.
 CREATE TABLE llx_school_student_parent (
 	rowid integer AUTO_INCREMENT PRIMARY KEY,
 	fk_student integer NOT NULL,
@@ -89,7 +108,8 @@ CREATE TABLE llx_school_student_parent (
 	KEY idx_school_parent_soc (fk_soc)
 ) ENGINE=innodb;
 
--- Individual enrolment of a student in a session or in a course. A student who is a member of a class is not listed
+-- Individual enrolment of a student in a session or in a course. status: 0 to enrol in Chamilo, 1 enrolled, 3 to remove
+-- (the row is deleted once removed). A student who is a member of a class is not listed
 -- here for the class's sessions: Chamilo enrols the members of a class itself when the class is linked to a session.
 CREATE TABLE llx_school_enrolment (
 	rowid integer AUTO_INCREMENT PRIMARY KEY,

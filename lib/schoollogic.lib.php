@@ -250,7 +250,7 @@ function schoolTeacherUsernameCandidates(string $login, string $firstname, strin
 {
 	$base = schoolWantedUsername($login);
 	if ($base === '') {
-		$base = schoolWantedUsername(strtolower(trim($firstname).'.'.trim($lastname)));
+		$base = schoolWantedUsername(strtolower(schoolAsciiFold(trim($firstname).'.'.trim($lastname))));
 		$base = trim($base, '.');
 	}
 	if ($base === '' || $max < 1) {
@@ -315,4 +315,73 @@ function schoolIdsDiff(array $wanted, array $have): array
 		'add' => array_values(array_diff($wanted, $have)),
 		'remove' => array_values(array_diff($have, $wanted)),
 	);
+}
+
+/**
+ * Letters with a diacritic replaced by their plain ASCII form, for a username built from a name ("Élodie" gives
+ * "Elodie"). A table is used rather than iconv or intl, whose result depends on the server's locale and extensions.
+ *
+ * @param string $text Text in UTF-8
+ * @return string
+ */
+function schoolAsciiFold(string $text): string
+{
+	static $map = array(
+		'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A', 'Æ' => 'AE', 'Ç' => 'C', 'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E',
+		'Ì' => 'I', 'Í' => 'I', 'Î' => 'I', 'Ï' => 'I', 'Ñ' => 'N', 'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O', 'Ø' => 'O', 'Œ' => 'OE',
+		'Ù' => 'U', 'Ú' => 'U', 'Û' => 'U', 'Ü' => 'U', 'Ý' => 'Y', 'ß' => 'ss',
+		'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'å' => 'a', 'æ' => 'ae', 'ç' => 'c', 'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e',
+		'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i', 'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o', 'ø' => 'o', 'œ' => 'oe',
+		'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ü' => 'u', 'ý' => 'y', 'ÿ' => 'y',
+		'Ā' => 'A', 'ā' => 'a', 'Ă' => 'A', 'ă' => 'a', 'Ą' => 'A', 'ą' => 'a', 'Ć' => 'C', 'ć' => 'c', 'Č' => 'C', 'č' => 'c', 'Ď' => 'D', 'ď' => 'd',
+		'Đ' => 'D', 'đ' => 'd', 'Ē' => 'E', 'ē' => 'e', 'Ę' => 'E', 'ę' => 'e', 'Ě' => 'E', 'ě' => 'e', 'Ğ' => 'G', 'ğ' => 'g', 'Ī' => 'I', 'ī' => 'i',
+		'İ' => 'I', 'ı' => 'i', 'Ł' => 'L', 'ł' => 'l', 'Ń' => 'N', 'ń' => 'n', 'Ň' => 'N', 'ň' => 'n', 'Ō' => 'O', 'ō' => 'o', 'Ő' => 'O', 'ő' => 'o',
+		'Ř' => 'R', 'ř' => 'r', 'Ś' => 'S', 'ś' => 's', 'Ş' => 'S', 'ş' => 's', 'Š' => 'S', 'š' => 's', 'Ţ' => 'T', 'ţ' => 't', 'Ť' => 'T', 'ť' => 't',
+		'Ū' => 'U', 'ū' => 'u', 'Ů' => 'U', 'ů' => 'u', 'Ű' => 'U', 'ű' => 'u', 'Ź' => 'Z', 'ź' => 'z', 'Ż' => 'Z', 'ż' => 'z', 'Ž' => 'Z', 'ž' => 'z',
+	);
+	return strtr($text, $map);
+}
+
+/**
+ * Typed reference stored in the dolibarr_id extra field of a Chamilo user. Teachers, students and parents come from
+ * three different Dolibarr tables, so a bare number would be ambiguous: it is "user:7", "student:12" or "contact:30".
+ *
+ * @param string $type 'user', 'student' or 'contact'
+ * @param int    $id   Id in the matching Dolibarr table
+ * @return string
+ */
+function schoolDolibarrRef(string $type, int $id): string
+{
+	return $type.':'.$id;
+}
+
+/**
+ * Email address to give a student's Chamilo account. Chamilo requires one, and it must be unique, while a child
+ * often has none and must not share the parent's address. In order: the student's own address; else the address of a
+ * parent with the username added after a plus sign (jane+leo.doe@example.org), which reaches the parent's mailbox
+ * on most providers, so the parent receives the message to choose a password; else a placeholder on the domain set in
+ * the module settings.
+ *
+ * @param string $own               Student's own email, may be empty
+ * @param string $parentEmail       Email of a parent, may be empty
+ * @param string $username          Chamilo username of the student
+ * @param string $placeholderDomain Domain for the last resort, may be empty
+ * @return string '' when no address can be built
+ */
+function schoolStudentEmail(string $own, string $parentEmail, string $username, string $placeholderDomain): string
+{
+	$own = trim($own);
+	if ($own !== '') {
+		return $own;
+	}
+	$tag = (string) preg_replace('/[^A-Za-z0-9._-]/', '', $username);
+	$parentEmail = trim($parentEmail);
+	if ($tag !== '' && preg_match('/^([^@+\s]+)(\+[^@\s]*)?@([^@\s]+)$/', $parentEmail, $m)) {
+		return $m[1].'+'.$tag.'@'.$m[3];
+	}
+	$domain = trim($placeholderDomain);
+	if ($tag !== '' && $domain !== '' && preg_match('/^[A-Za-z0-9.-]+$/', $domain)) {
+		return $tag.'@'.$domain;
+	}
+	return '';
 }

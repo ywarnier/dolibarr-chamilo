@@ -67,6 +67,35 @@ On **School > Sessions**, press the pencil in the *Coaches* column. For each cou
 
 Both pages need the *Manage teachers* right.
 
+## Students and parents
+
+**School > Students** lists the students. A student is not a third party: the **parents** are your customers, and a student is linked to them.
+
+### Creating a student
+
+Press **New student**, give the first and last name (the birth date and an email are optional) and press **Create**. The student's Chamilo account is created at the next synchronization, with the student role. The username is built from the name (`elodie.francois`; a number is added if it is taken).
+
+A student often has no email, and Chamilo needs one for each account. In that case Chamilo is given the email of the first parent that has one, with the username after a plus sign (`parent+elodie.francois@example.org`). It reaches the parent's mailbox, where Chamilo's message to choose a password arrives, so the parent can set the child's password. Give the student an email of their own if you prefer.
+
+### Parents
+
+On the student's card, under **Parents**, pick a third party and press **Add a parent**, then complete its row:
+
+- **Contact**: the person at that third party, used if the parent follows the child in Chamilo.
+- **Relation**: parent, guardian or other.
+- **Payer** and **Share of the cost**: who pays for this child and how much of the cost. This is kept for the invoicing of the child's activities, and nothing is invoiced yet.
+- **Follows in Chamilo**: tick it to give the parent a Chamilo account with which they follow the child (in Chamilo the parent is a human resources manager, the role that follows other users). The contact needs an email. The same parent account follows all their children. Unticking it removes the following and keeps the account.
+
+Press **Save** on the row. A parent can be linked to several children, and a child to several parents. A third party's card has a **Children** tab that lists its children.
+
+### Enrolling a student
+
+On the student's card, under **Enrolments**, pick a session or a course and press **Enrol**. Only sessions and courses that are in Chamilo are offered. Enrolling in a session enrols the student in all its courses. **Remove** takes the student out again. Both reach Chamilo at the next synchronization.
+
+### An inactive student
+
+Unticking **Active** on the card deactivates the student's Chamilo account; ticking it again reactivates it.
+
 ## When something is not synchronized
 
 - A change that waits is normal for a few minutes. Press **Synchronize now** to send it at once.
@@ -79,7 +108,6 @@ Both pages need the *Manage teachers* right.
 These are planned and are not available yet:
 
 - creating and editing courses from Dolibarr, and changing a session you created;
-- students and their parents (your customers), and enrolling students in courses and sessions;
 - classes of students, announcements to all the parents of a class, and invoicing an activity of a class;
 - invoicing enrolments;
 - rooms and attendance times, using Dolibarr's Resources module.
