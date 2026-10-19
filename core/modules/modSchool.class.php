@@ -73,7 +73,7 @@ class modSchool extends DolibarrModules
 		$this->conflictwith = array();
 		$this->langfiles = array('school@school');
 		$this->phpmin = array(8, 1);
-		$this->need_dolibarr_version = array(21, 0);
+		$this->need_dolibarr_version = array(24, 0);
 		$this->need_javascript_ajax = 0;
 		$this->warnings_activation = array();
 		$this->warnings_activation_ext = array();
@@ -208,7 +208,7 @@ class modSchool extends DolibarrModules
 	}
 
 	/**
-	 * Disable the module. Menus, rights and the cron job go away. School data stays.
+	 * Disable the module. Menus and rights go away. School data stays, and so does the cron job, which does nothing while the module is off.
 	 *
 	 * @param string $options Options
 	 * @return int 1 if OK, 0 or -1 if KO

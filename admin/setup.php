@@ -32,6 +32,8 @@ require_once __DIR__.'/../lib/school_bootstrap.inc.php';
  */
 
 require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+require_once __DIR__.'/../class/chamilosetup.class.php';
+require_once __DIR__.'/../class/schoolcatalog.class.php';
 schoolLoadLangs();
 if (!isModEnabled('school')) {
 	accessforbidden();
@@ -78,6 +80,32 @@ if ($action === 'test') {
 	exit;
 }
 
+if ($action === 'setupfields' || $action === 'pushidentity') {
+	$client = schoolGetClient();
+	if ($client === null) {
+		setEventMessages($langs->trans('SchoolNotConfigured'), null, 'errors');
+	} elseif ($action === 'setupfields') {
+		$created = 0;
+		$existing = 0;
+		$errors = array();
+		foreach ((new ChamiloSetup($client))->ensureAll($db) as $name => $r) {
+			if (!$r['ok']) {
+				$errors[] = $name.': '.$r['error'];
+			} elseif ($r['created']) {
+				$created++;
+			} else {
+				$existing++;
+			}
+		}
+		setEventMessages($langs->trans('SchoolFieldsReport', $created, $existing), $errors ?: null, $errors ? 'errors' : 'mesgs');
+	} else {
+		$report = (new SchoolCatalog($db, $user))->pushIdentity($client);
+		setEventMessages($langs->trans('SchoolPushReport', $report['courses']['created'] + $report['courses']['updated'], $report['sessions']['created'] + $report['sessions']['updated'], $report['courses']['unchanged'] + $report['sessions']['unchanged']), $report['errors'] ?: null, $report['errors'] ? 'errors' : 'mesgs');
+	}
+	header('Location: '.$_SERVER['PHP_SELF']);
+	exit;
+}
+
 llxHeader('', $langs->trans('SchoolSetup'));
 print load_fiche_titre($langs->trans('SchoolSetup'), '', 'title_setup');
 
@@ -96,11 +124,26 @@ print '</table>';
 print '<div class="center"><input type="submit" class="button button-save" value="'.dol_escape_htmltag($langs->trans('Save')).'"></div>';
 print '</form>';
 
-print '<br><form method="POST" action="'.dol_escape_htmltag($_SERVER['PHP_SELF']).'">';
-print '<input type="hidden" name="token" value="'.newToken().'">';
-print '<input type="hidden" name="action" value="test">';
-print '<div class="center"><input type="submit" class="button" value="'.dol_escape_htmltag($langs->trans('SchoolTestConnection')).'"></div>';
-print '</form>';
+print '<br><table class="noborder centpercent">';
+print '<tr class="liste_titre"><td colspan="2">'.$langs->trans('SchoolPrepareChamilo').'</td></tr>';
+$steps = array(
+	'test' => array('SchoolTestConnection', 'SchoolTestConnectionHelp'),
+	'setupfields' => array('SchoolCreateExtraFields', 'SchoolCreateExtraFieldsHelp'),
+	'pushidentity' => array('SchoolPushIdentity', 'SchoolPushIdentityHelp'),
+);
+foreach ($steps as $act => $labels) {
+	print '<tr class="oddeven"><td>'.$langs->trans($labels[0]).'<br><span class="opacitymedium">'.$langs->trans($labels[1]).'</span></td><td class="right nowraponall">';
+	print '<form method="POST" action="'.dol_escape_htmltag($_SERVER['PHP_SELF']).'" class="inline-block">';
+	print '<input type="hidden" name="token" value="'.newToken().'"><input type="hidden" name="action" value="'.$act.'">';
+	print '<input type="submit" class="button" value="'.dol_escape_htmltag($langs->trans($labels[0])).'"></form></td></tr>';
+}
+print '<tr class="oddeven"><td>'.$langs->trans('SchoolExtraFieldIds').'</td><td class="right opacitymedium">';
+$ids = array();
+foreach (array_keys(ChamiloSetup::requiredFields()) as $const) {
+	$ids[] = str_replace('SCHOOL_EF_', '', $const).'='.(getDolGlobalInt($const) > 0 ? getDolGlobalInt($const) : '-');
+}
+print dol_escape_htmltag(implode('  ', $ids)).'</td></tr>';
+print '</table>';
 
 llxFooter();
 $db->close();

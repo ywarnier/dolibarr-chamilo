@@ -69,3 +69,13 @@ SchoolErrTitle=The label is required
 SchoolErrDates=Both display dates are required
 SchoolErrDateOrder=The end date must not be before the start date
 SchoolSessionQueued=Session created. It will be sent to Chamilo at the next synchronization (or use Synchronize now).
+
+SchoolPrepareChamilo=Prepare Chamilo
+SchoolTestConnectionHelp=Checks the URL, the key and the administrator rights.
+SchoolCreateExtraFields=Create the extra fields
+SchoolCreateExtraFieldsHelp=Creates dolibarr_id and price on courses and sessions in Chamilo. Fields that already exist are kept.
+SchoolPushIdentity=Send Dolibarr ids to Chamilo
+SchoolPushIdentityHelp=Writes the Dolibarr product id (and the price, when above zero) on every linked course and session. Safe to repeat.
+SchoolExtraFieldIds=Chamilo extra field ids
+SchoolFieldsReport=Extra fields: %s created, %s already there.
+SchoolPushReport=Written for %s course(s) and %s session(s), %s already up to date.

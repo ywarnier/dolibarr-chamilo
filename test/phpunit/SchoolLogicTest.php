@@ -91,7 +91,8 @@ class SchoolLogicTest extends TestCase
 	{
 		$this->assertSame('jdoe', schoolWantedUsername(' jdoe '));
 		$this->assertSame('j.doe-2_x', schoolWantedUsername('j.doe-2_x'));
-		$this->assertSame('jdoe', schoolWantedUsername('j doe@école'));
+		// Characters outside A-Z a-z 0-9 . _ - are dropped, accented letters included.
+		$this->assertSame('jdoecole', schoolWantedUsername('j doe@école'));
 		$this->assertSame('', schoolWantedUsername('@@ '));
 		$this->assertSame(100, strlen(schoolWantedUsername(str_repeat('a', 150))));
 	}
