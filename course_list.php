@@ -66,19 +66,31 @@ $sql = "SELECT c.rowid, c.code, c.language, c.chamilo_id, c.sync_status, c.last_
 	." WHERE c.entity = ".((int) $conf->entity)." ORDER BY p.label";
 $resql = $db->query($sql);
 
+// Teachers of each course, with their state (a row waiting to be removed no longer counts).
+$teachers = array();
+$tq = $db->query("SELECT ct.fk_course, ct.sync_status, u.firstname, u.lastname, u.login FROM ".MAIN_DB_PREFIX."school_course_teacher AS ct INNER JOIN ".MAIN_DB_PREFIX."school_teacher AS t ON t.rowid = ct.fk_teacher INNER JOIN ".MAIN_DB_PREFIX."user AS u ON u.rowid = t.fk_user WHERE ct.sync_status <> 3 ORDER BY u.lastname");
+while ($tq && ($x = $db->fetch_object($tq))) {
+	$teachers[(int) $x->fk_course][] = dol_escape_htmltag(trim($x->firstname.' '.$x->lastname) ?: $x->login).((int) $x->sync_status === 0 ? ' <span class="opacitymedium">('.$langs->trans('SchoolStatusPending').')</span>' : '');
+}
+
 print '<table class="noborder centpercent">';
-print '<tr class="liste_titre"><td>'.$langs->trans('Ref').'</td><td>'.$langs->trans('Label').'</td><td>'.$langs->trans('SchoolLanguage').'</td><td>'.$langs->trans('SchoolChamiloId').'</td><td>'.$langs->trans('SchoolLastSync').'</td></tr>';
+print '<tr class="liste_titre"><td>'.$langs->trans('Ref').'</td><td>'.$langs->trans('Label').'</td><td>'.$langs->trans('SchoolLanguage').'</td><td>'.$langs->trans('SchoolTeachers').'</td><td>'.$langs->trans('SchoolChamiloId').'</td><td>'.$langs->trans('SchoolLastSync').'</td></tr>';
 $nb = 0;
 while ($resql && ($o = $db->fetch_object($resql))) {
 	$nb++;
 	$url = DOL_URL_ROOT.'/product/card.php?id='.((int) $o->pid);
 	print '<tr class="oddeven"><td><a href="'.$url.'">'.img_picto('', 'service', 'class="pictofixedwidth"').dol_escape_htmltag($o->ref).'</a></td>';
 	print '<td>'.dol_escape_htmltag($o->label).'</td><td>'.dol_escape_htmltag((string) $o->language).'</td>';
+	print '<td>'.implode(', ', $teachers[(int) $o->rowid] ?? array());
+	if ($user->hasRight('school', 'teacher') && $o->chamilo_id) {
+		print ' <a href="'.dol_buildpath('/school/assign_teachers.php', 1).'?type=course&id='.((int) $o->rowid).'&mainmenu=school">'.img_picto($langs->trans('SchoolAssign'), 'edit').'</a>';
+	}
+	print '</td>';
 	print '<td>'.($o->chamilo_id ? '#'.((int) $o->chamilo_id).' '.dol_escape_htmltag($o->code) : '').'</td>';
 	print '<td>'.($o->last_sync ? dol_print_date($db->jdate($o->last_sync), 'dayhour') : '').'</td></tr>';
 }
 if ($nb === 0) {
-	print '<tr class="oddeven"><td colspan="5" class="opacitymedium">'.$langs->trans('SchoolNothingYet').'</td></tr>';
+	print '<tr class="oddeven"><td colspan="6" class="opacitymedium">'.$langs->trans('SchoolNothingYet').'</td></tr>';
 }
 print '</table>';
 

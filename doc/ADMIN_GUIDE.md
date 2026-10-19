@@ -11,7 +11,9 @@ Everything is on **Home > Setup > Modules/Applications > School (wrench icon)**.
 | Chamilo portal URL | `SCHOOL_CHAMILO_URL` | Address of the portal without `/api`. Must start with `http://` or `https://`. A trailing slash or `/api` is removed. |
 | External API key | `SCHOOL_CHAMILO_API_KEY` | Stored encrypted with Dolibarr's own encryption. The field stays empty after saving: leaving it empty keeps the stored key. |
 | Allow a local address | `SCHOOL_CHAMILO_ALLOW_LOCAL` | Off by default. When off, the module refuses to call a private or loopback address, as protection against requests to internal services. Turn it on on a development machine only. |
-| Chamilo extra field ids | `SCHOOL_EF_COURSE_DOLIBARR_ID`, `SCHOOL_EF_COURSE_PRICE`, `SCHOOL_EF_SESSION_DOLIBARR_ID`, `SCHOOL_EF_SESSION_PRICE` | Filled by **Create the extra fields**. Shown at the bottom of the page. |
+| Chamilo extra field ids | `SCHOOL_EF_USER_DOLIBARR_ID`, `SCHOOL_EF_COURSE_DOLIBARR_ID`, `SCHOOL_EF_COURSE_PRICE`, `SCHOOL_EF_SESSION_DOLIBARR_ID`, `SCHOOL_EF_SESSION_PRICE` | Filled by **Create the extra fields**. Shown at the bottom of the page. |
+| Send the new-account message | `SCHOOL_TEACHER_SEND_EMAIL` | On unless set to `0`. When on, Chamilo emails a newly created teacher a link to choose a password. Set it with **Home > Setup > Other setup**, or in the `llx_const` table. |
+| Chamilo portal id | `SCHOOL_CHAMILO_ACCESS_URL_ID` | Optional. Without it the module finds the portal whose address has the same host and port as the configured URL. Set it if that detection cannot work, for example behind a proxy that changes the host. |
 
 The three buttons of **Prepare Chamilo** can be pressed again at any time; none of them duplicates anything.
 
@@ -26,7 +28,7 @@ Assign them in **Home > Setup > Users and groups**.
 | Delete school data (`delete`) | Reserved for the delete features |
 | Run and inspect the Chamilo synchronization (`sync`) | Import from Chamilo, **Synchronize now** |
 | Configure the Chamilo connection (`setup`) | The setup page and its buttons |
-| Manage teachers and their Chamilo accounts (`teacher`) | Reserved for the teacher features, so that not everyone who can edit school data can create Chamilo accounts for staff |
+| Manage teachers and their Chamilo accounts (`teacher`) | Enable a Dolibarr employee as a teacher (this creates or links a Chamilo account), choose the teachers of courses and the coaches of sessions. Kept apart from `write` so that not everyone who can edit school data can create Chamilo accounts for staff. |
 | Manage classes, announcements and class activity invoicing (`class`) | Reserved for the class features |
 
 Dolibarr administrators hold every right.
@@ -67,6 +69,8 @@ UPDATE llx_school_syncqueue SET status = 0, attempts = 0, next_attempt = NOW() W
 - Two extra fields on **courses** and two on **sessions**: `dolibarr_id` (text, the Dolibarr **product id**) and `price` (decimal). They hold the link between the two systems and let Dolibarr find an object again without relying on its title.
 - `price` is the field the Chamilo WordPress storefront plugin reads. It is written only when the Dolibarr price is above zero: for the storefront, an item with no price is not for sale.
 - Sessions created from Dolibarr, with their dates and courses.
+- **Teacher accounts**, created with the teacher role (status 1) and a `dolibarr_id` extra field holding the Dolibarr user id. The module never changes the role of an account: an account that already exists is linked as it is, and the teacher list shows a warning icon when that account is not a teacher. Nobody can become an administrator through the synchronization.
+- Teachers and coaches of courses and sessions, using Chamilo's own course user actions.
 
 The Chamilo API cannot delete extra fields or their values. If you delete a session or a course in Chamilo, its `dolibarr_id` and `price` values stay in the database, unused.
 
@@ -83,6 +87,8 @@ Created by the module and kept when it is disabled:
 | `llx_school_class`, `llx_school_class_student`, `llx_school_class_session` | Classes, their members and the sessions they follow |
 | `llx_school_class_activity`, `llx_school_class_activity_invoice` | Extra activities of a class and what was invoiced to which parent |
 | `llx_school_syncqueue` | The synchronization queue |
+
+Teachers are Dolibarr users flagged as employees (**Home > Users and groups**): there is no separate teacher record to maintain.
 
 Sessions and courses are service products, with the reference `SCH-C-<course code>` for an imported course, `SCH-S-<Chamilo id>` for an imported session and `SCH-SD-<n>` for a session created in Dolibarr. The module never changes the label, price or status of a product after creating it: those belong to Dolibarr.
 
@@ -107,4 +113,8 @@ Start with the connection test on the setup page, then the School home page (que
 | "Create session: ..." with a validation message | Chamilo rejected the data. The message is Chamilo's own; fix the data in Dolibarr and set the job back to Waiting. |
 | Jobs stay Waiting | The scheduler is not running: check **Setup > Scheduled jobs** and the system cron, or press **Synchronize now** |
 | A course or session you imported has no `dolibarr_id` in Chamilo | Press **Send Dolibarr ids to Chamilo** |
+| A teacher stays in state *Error*: "The Dolibarr user has no email address" | Add an email to the Dolibarr user, then use **Send again** on the teacher list |
+| "All the usernames tried are taken" | The login and its numbered variants (`jdoe`, `jdoe.2`... up to 5) already exist in Chamilo. Change the Dolibarr login or create the Chamilo account by hand with the teacher's email, then use **Send again**: an account with the same email is linked. |
+| "The Chamilo account no longer exists" | The account was deleted in Chamilo. The module does not create it again by itself, so that a deletion is not silently undone: remove the teacher's link or recreate the account. |
+| A teacher is linked but shown with a warning | The existing Chamilo account found by email is not a teacher. The module does not change roles: change it in Chamilo if that is wanted. |
 | After re-enabling the module, the menu is missing | Log out and in again, and open the module from the top menu |

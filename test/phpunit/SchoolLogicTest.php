@@ -143,4 +143,38 @@ class SchoolLogicTest extends TestCase
 		$this->assertSame('99.9', schoolFormatPrice(99.9));
 		$this->assertSame('1234.57', schoolFormatPrice(1234.567));
 	}
+
+	public function testTeacherUsernameCandidates(): void
+	{
+		$this->assertSame(array('jdoe', 'jdoe.2', 'jdoe.3'), schoolTeacherUsernameCandidates('jdoe', 'Jane', 'Doe', 3));
+		// No usable login: fall back to firstname.lastname.
+		$this->assertSame(array('jane.doe', 'jane.doe.2'), schoolTeacherUsernameCandidates('@@', 'Jane', 'Doe', 2));
+		$this->assertSame(array(), schoolTeacherUsernameCandidates('@@', '', '', 3));
+		$this->assertSame(array(), schoolTeacherUsernameCandidates('jdoe', 'Jane', 'Doe', 0));
+		// A 100 character login keeps room for the suffix.
+		$long = schoolTeacherUsernameCandidates(str_repeat('a', 100), '', '', 3);
+		$this->assertSame(100, strlen($long[0]));
+		$this->assertSame(100, strlen($long[2]));
+		$this->assertStringEndsWith('.3', $long[2]);
+	}
+
+	public function testTeacherPayload(): void
+	{
+		$this->assertSame(
+			array('firstname' => 'Jane', 'lastname' => 'Doe', 'email' => 'j@x.org', 'active' => 1, 'phone' => '+33 1'),
+			schoolTeacherPayload(array('firstname' => ' Jane ', 'lastname' => 'Doe', 'email' => 'j@x.org', 'phone' => '+33 1', 'statut' => 1))
+		);
+		$p = schoolTeacherPayload(array('firstname' => 'Jane', 'lastname' => 'Doe', 'email' => 'j@x.org', 'phone' => '', 'statut' => '0'));
+		$this->assertSame(0, $p['active']);
+		$this->assertArrayNotHasKey('phone', $p);
+	}
+
+	public function testConflictKindAndIdsDiff(): void
+	{
+		$this->assertSame('username', schoolConflictKind('username_already_exists'));
+		$this->assertSame('email', schoolConflictKind('email_already_exists'));
+		$this->assertSame('', schoolConflictKind('Internal Server Error'));
+		$this->assertSame(array('add' => array(3), 'remove' => array(1)), schoolIdsDiff(array(2, 3), array(1, 2)));
+		$this->assertSame(array('add' => array(), 'remove' => array()), schoolIdsDiff(array(), array()));
+	}
 }

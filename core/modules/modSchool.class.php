@@ -50,7 +50,7 @@ class modSchool extends DolibarrModules
 		$this->picto = 'fa-graduation-cap';
 
 		$this->module_parts = array(
-			'triggers' => 0,
+			'triggers' => 1,
 			'login' => 0,
 			'substitutions' => 0,
 			'menus' => 0,
@@ -168,6 +168,20 @@ class modSchool extends DolibarrModules
 			'mainmenu' => 'school',
 			'leftmenu' => 'schoolcourses',
 			'url' => '/school/course_list.php',
+			'langs' => 'school@school',
+			'position' => 1100 + $r,
+			'enabled' => "isModEnabled('school')",
+			'perms' => $canRead,
+			'target' => '',
+			'user' => 0,
+		);
+		$this->menu[$r++] = array(
+			'fk_menu' => 'fk_mainmenu=school',
+			'type' => 'left',
+			'titre' => 'SchoolTeachers',
+			'mainmenu' => 'school',
+			'leftmenu' => 'schoolteachers',
+			'url' => '/school/teacher_list.php',
 			'langs' => 'school@school',
 			'position' => 1100 + $r,
 			'enabled' => "isModEnabled('school')",

@@ -47,6 +47,26 @@ The session exists in Dolibarr at once, as a service product. It reaches Chamilo
 
 In Chamilo the session has the same dates for display and for access, and the courses you ticked. Students are not enrolled by this step.
 
+## Teachers
+
+**School > Teachers** lists your employees, that is the Dolibarr users flagged as employees. A teacher is simply an employee who has also a Chamilo account.
+
+1. Next to an employee, press **Enable on Chamilo**. The employee needs an email address. The account is created at the next synchronization, with the **teacher** role and nothing else, and Chamilo emails them a link to choose a password.
+2. If a Chamilo account with the same email already exists, it is linked instead, and it is left as it is. A warning icon tells you when that account is not a teacher.
+3. The Chamilo username is the Dolibarr login when it is free. If it is taken, a number is added (`jdoe.2`). The username that was really used is shown in the list.
+
+Afterwards the Chamilo account follows the Dolibarr user: changing the name, email or phone, or disabling the user, is sent to Chamilo by itself. **Send again** forces an update.
+
+### Choosing the teachers of a course
+
+On **School > Courses**, press the pencil in the *Teachers* column of a course, tick the teachers, and save. They become the teachers of the course in Chamilo at the next synchronization. Unticking someone removes them from the course in Chamilo.
+
+### Choosing the coaches of a session
+
+On **School > Sessions**, press the pencil in the *Coaches* column. For each course of the session, tick who coaches it in this session. The pencil is shown when the session is in Chamilo and has at least one course.
+
+Both pages need the *Manage teachers* right.
+
 ## When something is not synchronized
 
 - A change that waits is normal for a few minutes. Press **Synchronize now** to send it at once.
@@ -59,7 +79,6 @@ In Chamilo the session has the same dates for display and for access, and the co
 These are planned and are not available yet:
 
 - creating and editing courses from Dolibarr, and changing a session you created;
-- teachers: Dolibarr employees who also get a Chamilo account, and assignment to courses and sessions;
 - students and their parents (your customers), and enrolling students in courses and sessions;
 - classes of students, announcements to all the parents of a class, and invoicing an activity of a class;
 - invoicing enrolments;

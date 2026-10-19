@@ -20,7 +20,7 @@ This is an early version. The plumbing and the catalogue work, the people-relate
 | `dolibarr_id` and `price` extra fields in Chamilo | Done |
 | Creating a session in Dolibarr and in Chamilo | Done |
 | Creating or editing a course from Dolibarr | Planned |
-| Teachers (Dolibarr employees with a Chamilo account) | In progress |
+| Teachers: Dolibarr employees with a Chamilo account, assigned to courses and sessions | Done |
 | Students, parents, enrolments | Planned (tables exist) |
 | Classes, class announcements, class activity invoicing | Planned (tables exist) |
 | Billing of enrolments | Planned |
@@ -51,18 +51,21 @@ The module relies on Chamilo API features that are in Chamilo's `master` branch:
 - the external API key authentication;
 - `PATCH` and `DELETE` on courses (administrators only);
 - the class routes `GET /api/usergroups/{id}/subscriptions` and `PUT /api/usergroups/{id}/users|sessions|courses` (administrators only);
-- the correct `nbrCourses` counter when a course is linked to a session through the API.
+- the correct `nbrCourses` counter when a course is linked to a session through the API;
+- the creation of a user on a portal (`POST /api/access_urls/{id}/user`) and the course user actions (`POST /api/course-users/actions/subscribe` and `unsubscribe`), which already exist.
 
 ## Layout
 
 ```text
 core/modules/modSchool.class.php   Module descriptor: rights, menus, cron job, init and remove
 sql/llx_school.sql                 Schema, created on enable and kept on disable
-class/                             ChamiloClient, SyncQueue, SchoolCron, SchoolCatalog, ChamiloSetup, SchoolSessionSync
+class/                             ChamiloClient, SyncQueue, SchoolCron, SchoolCatalog, ChamiloSetup, SchoolSessionSync, SchoolTeacherSync
 lib/                               school_bootstrap.inc.php (loads Dolibarr), school.lib.php, schoollogic.lib.php (pure rules)
 admin/setup.php                    Connection settings and the "Prepare Chamilo" steps
 index.php course_list.php          Pages
 session_list.php session_card.php
+teacher_list.php assign_teachers.php
+core/triggers/                     Queues the update of a teacher's Chamilo account when the Dolibarr user changes
 langs/{en_US,fr_FR}/school.lang    Translations
 test/phpunit/                      Tests of the pure rules
 ```

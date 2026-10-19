@@ -233,3 +233,86 @@ function schoolFormatPrice(float $price): string
 	}
 	return rtrim(rtrim(number_format($price, 2, '.', ''), '0'), '.');
 }
+
+/**
+ * Usernames to try, in order, when creating a teacher's Chamilo account. The first is the Dolibarr login, so both
+ * systems share one name when possible. The creation endpoint requires a username and does not generate one, so when
+ * a name is taken the next candidate adds a number: jdoe, jdoe.2, jdoe.3... When the login has no usable character,
+ * firstname.lastname is used instead.
+ *
+ * @param string $login     Dolibarr login
+ * @param string $firstname First name
+ * @param string $lastname  Last name
+ * @param int    $max       Number of candidates
+ * @return list<string> Empty when no name can be built
+ */
+function schoolTeacherUsernameCandidates(string $login, string $firstname, string $lastname, int $max = 5): array
+{
+	$base = schoolWantedUsername($login);
+	if ($base === '') {
+		$base = schoolWantedUsername(strtolower(trim($firstname).'.'.trim($lastname)));
+		$base = trim($base, '.');
+	}
+	if ($base === '' || $max < 1) {
+		return array();
+	}
+	$candidates = array($base);
+	for ($n = 2; $n <= $max; $n++) {
+		$candidates[] = substr($base, 0, 100 - strlen('.'.$n)).'.'.$n;
+	}
+	return $candidates;
+}
+
+/**
+ * What Chamilo's user update takes from a Dolibarr user. A phone number is sent only when there is one, so an
+ * empty field in Dolibarr never blanks a number that someone typed in Chamilo.
+ *
+ * @param array{firstname?:string,lastname?:string,email?:string,phone?:string,statut?:int|string} $user Dolibarr user fields
+ * @return array<string,mixed>
+ */
+function schoolTeacherPayload(array $user): array
+{
+	$payload = array(
+		'firstname' => trim((string) ($user['firstname'] ?? '')),
+		'lastname' => trim((string) ($user['lastname'] ?? '')),
+		'email' => trim((string) ($user['email'] ?? '')),
+		'active' => ((int) ($user['statut'] ?? 1)) === 1 ? 1 : 0,
+	);
+	$phone = trim((string) ($user['phone'] ?? ''));
+	if ($phone !== '') {
+		$payload['phone'] = $phone;
+	}
+	return $payload;
+}
+
+/**
+ * Which field a 409 answer of Chamilo's user creation is about.
+ *
+ * @param string $message Error message of the response
+ * @return string 'username', 'email' or '' for anything else
+ */
+function schoolConflictKind(string $message): string
+{
+	if (strpos($message, 'username_already_exists') !== false) {
+		return 'username';
+	}
+	if (strpos($message, 'email_already_exists') !== false) {
+		return 'email';
+	}
+	return '';
+}
+
+/**
+ * What to do to make a list in Chamilo match the wanted one.
+ *
+ * @param list<int> $wanted Ids that must be present
+ * @param list<int> $have   Ids present now
+ * @return array{add:list<int>,remove:list<int>}
+ */
+function schoolIdsDiff(array $wanted, array $have): array
+{
+	return array(
+		'add' => array_values(array_diff($wanted, $have)),
+		'remove' => array_values(array_diff($have, $wanted)),
+	);
+}

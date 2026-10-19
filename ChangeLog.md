@@ -5,10 +5,22 @@ All notable changes of the School module. The format follows [Keep a Changelog](
 ## Unreleased
 
 ### Added
+- Teachers. A Dolibarr user flagged as an employee can be enabled as a teacher: the module creates the account in Chamilo with the teacher role and nothing else, or links the existing account that has the same email without changing its data or role. The Chamilo username is the Dolibarr login when it is free, and a numbered variant (`jdoe.2`) when it is not. The account follows the Dolibarr user: name, email, phone, and deactivation when the user is disabled. A new `dolibarr_id` extra field on Chamilo users holds the link.
+- Assignment of teachers to courses, and of coaches to the courses of a session, with the removal of teachers who are no longer assigned. Chamilo is read first, because it refuses to subscribe someone who is already there.
+- A trigger that queues the update of a teacher's account when the Dolibarr user is modified, enabled or disabled.
+- Settings `SCHOOL_TEACHER_SEND_EMAIL` (default on: Chamilo sends the new teacher its "choose your password" message) and `SCHOOL_CHAMILO_ACCESS_URL_ID` (the portal id, found from the URL when not set).
 - "Prepare Chamilo" block on the setup page: connection test, creation of the Chamilo extra fields, and sending of the Dolibarr ids to Chamilo, so none of these needs a script.
 - README, INSTALL, administrator guide and user guide.
 
 ### Changed
+- `llx_school_course_teacher` and `llx_school_session_teacher` have a `sync_status` column (0 to add in Chamilo, 1 in Chamilo, 3 to remove) instead of `chamilo_link_id`. A database created with an earlier build can be updated by hand:
+
+  ```sql
+  ALTER TABLE llx_school_course_teacher DROP COLUMN chamilo_link_id, ADD COLUMN sync_status smallint DEFAULT 0 NOT NULL;
+  ALTER TABLE llx_school_session_teacher DROP COLUMN chamilo_link_id, ADD COLUMN sync_status smallint DEFAULT 0 NOT NULL;
+  ```
+
+  Run "Create the extra fields" again on the setup page to create the new `dolibarr_id` field of Chamilo users.
 - Minimum Dolibarr version is now 24.0. The module is meant to be driven through Dolibarr's MCP server as well as through its screens.
 - `llx_school_enrolment.fk_class` is removed. Chamilo enrols the members of a class itself when the class is linked to a session, so Dolibarr keeps no class-derived enrolments. A database created with an earlier build can drop the column by hand:
 

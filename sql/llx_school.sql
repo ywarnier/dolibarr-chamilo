@@ -147,22 +147,22 @@ CREATE TABLE llx_school_teacher (
 	KEY idx_school_teacher_chamilo (chamilo_user_id)
 ) ENGINE=innodb;
 
--- Teachers of a course (Chamilo CourseRelUser, teacher relation).
+-- Teachers of a course. sync_status: 0 to add in Chamilo, 1 in Chamilo, 3 to remove from Chamilo (the row is deleted once removed).
 CREATE TABLE llx_school_course_teacher (
 	rowid integer AUTO_INCREMENT PRIMARY KEY,
 	fk_course integer NOT NULL,
 	fk_teacher integer NOT NULL,
-	chamilo_link_id integer,
+	sync_status smallint DEFAULT 0 NOT NULL,
 	UNIQUE KEY uk_school_course_teacher (fk_course, fk_teacher)
 ) ENGINE=innodb;
 
--- Coaches of a course inside a session (Chamilo SessionRelCourseRelUser, course coach).
+-- Coaches of a course inside a session. sync_status as for llx_school_course_teacher.
 CREATE TABLE llx_school_session_teacher (
 	rowid integer AUTO_INCREMENT PRIMARY KEY,
 	fk_session integer NOT NULL,
 	fk_course integer NOT NULL,
 	fk_teacher integer NOT NULL,
-	chamilo_link_id integer,
+	sync_status smallint DEFAULT 0 NOT NULL,
 	UNIQUE KEY uk_school_session_teacher (fk_session, fk_course, fk_teacher)
 ) ENGINE=innodb;
 

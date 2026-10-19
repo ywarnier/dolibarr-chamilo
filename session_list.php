@@ -61,8 +61,15 @@ $sql = "SELECT s.rowid, s.chamilo_id, s.display_start, s.display_end, s.access_s
 	." WHERE s.entity = ".((int) $conf->entity)." ORDER BY s.display_start DESC, p.label";
 $resql = $db->query($sql);
 
+// Coaches of each session (one name once, even when it coaches several of the session's courses).
+$coaches = array();
+$tq = $db->query("SELECT st.fk_session, u.firstname, u.lastname, u.login FROM ".MAIN_DB_PREFIX."school_session_teacher AS st INNER JOIN ".MAIN_DB_PREFIX."school_teacher AS t ON t.rowid = st.fk_teacher INNER JOIN ".MAIN_DB_PREFIX."user AS u ON u.rowid = t.fk_user WHERE st.sync_status <> 3 ORDER BY u.lastname");
+while ($tq && ($x = $db->fetch_object($tq))) {
+	$coaches[(int) $x->fk_session][dol_escape_htmltag(trim($x->firstname.' '.$x->lastname) ?: $x->login)] = true;
+}
+
 print '<table class="noborder centpercent">';
-print '<tr class="liste_titre"><td>'.$langs->trans('Ref').'</td><td>'.$langs->trans('Label').'</td><td>'.$langs->trans('SchoolDisplayDates').'</td><td>'.$langs->trans('SchoolAccessDates').'</td><td class="right">'.$langs->trans('SchoolCourses').'</td><td>'.$langs->trans('SchoolChamiloId').'</td><td>'.$langs->trans('SchoolSyncStatus').'</td></tr>';
+print '<tr class="liste_titre"><td>'.$langs->trans('Ref').'</td><td>'.$langs->trans('Label').'</td><td>'.$langs->trans('SchoolDisplayDates').'</td><td>'.$langs->trans('SchoolAccessDates').'</td><td class="right">'.$langs->trans('SchoolCourses').'</td><td>'.$langs->trans('SchoolCoaches').'</td><td>'.$langs->trans('SchoolChamiloId').'</td><td>'.$langs->trans('SchoolSyncStatus').'</td></tr>';
 $range = static function ($db, $a, $b): string {
 	$from = $a ? dol_print_date($db->jdate($a), 'dayhour') : '';
 	$to = $b ? dol_print_date($db->jdate($b), 'dayhour') : '';
@@ -75,12 +82,17 @@ while ($resql && ($o = $db->fetch_object($resql))) {
 	print '<tr class="oddeven"><td><a href="'.$url.'">'.img_picto('', 'service', 'class="pictofixedwidth"').dol_escape_htmltag($o->ref).'</a></td>';
 	print '<td>'.dol_escape_htmltag($o->label).'</td>';
 	print '<td>'.$range($db, $o->display_start, $o->display_end).'</td><td>'.$range($db, $o->access_start, $o->access_end).'</td>';
-	print '<td class="right">'.((int) $o->nbcourses).'</td><td>'.($o->chamilo_id ? '#'.((int) $o->chamilo_id) : '').'</td>';
+	print '<td class="right">'.((int) $o->nbcourses).'</td>';
+	print '<td>'.implode(', ', array_keys($coaches[(int) $o->rowid] ?? array()));
+	if ($user->hasRight('school', 'teacher') && $o->chamilo_id && (int) $o->nbcourses > 0) {
+		print ' <a href="'.dol_buildpath('/school/assign_teachers.php', 1).'?type=session&id='.((int) $o->rowid).'&mainmenu=school">'.img_picto($langs->trans('SchoolAssign'), 'edit').'</a>';
+	}
+	print '</td><td>'.($o->chamilo_id ? '#'.((int) $o->chamilo_id) : '').'</td>';
 	$st = (int) $o->sync_status;
 	print '<td>'.($st === 1 ? $langs->trans('SchoolStatusSynced') : ($st === 2 ? '<span class="error" title="'.dol_escape_htmltag((string) $o->last_error).'">'.$langs->trans('SchoolStatusError').'</span>' : $langs->trans('SchoolStatusPending'))).'</td></tr>';
 }
 if ($nb === 0) {
-	print '<tr class="oddeven"><td colspan="7" class="opacitymedium">'.$langs->trans('SchoolNothingYet').'</td></tr>';
+	print '<tr class="oddeven"><td colspan="8" class="opacitymedium">'.$langs->trans('SchoolNothingYet').'</td></tr>';
 }
 print '</table>';
 

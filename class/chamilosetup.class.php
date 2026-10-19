@@ -25,11 +25,13 @@ declare(strict_types=1);
 require_once __DIR__.'/chamiloclient.class.php';
 
 /**
- * Chamilo extra fields: `dolibarr_id` (the Dolibarr product id) and `price` on courses and sessions.
+ * Chamilo extra fields: `dolibarr_id` on users (the Dolibarr user id), courses and sessions (the Dolibarr product id),
+ * and `price` on courses and sessions.
  * `price` is the same field the WordPress storefront plugin reads, so one value serves both.
  */
 class ChamiloSetup
 {
+	public const ITEM_USER = 1;
 	public const ITEM_COURSE = 2;
 	public const ITEM_SESSION = 3;
 	public const TYPE_TEXT = 1;
@@ -56,6 +58,7 @@ class ChamiloSetup
 	public static function requiredFields(): array
 	{
 		return array(
+			'SCHOOL_EF_USER_DOLIBARR_ID' => array('item' => self::ITEM_USER, 'type' => self::TYPE_TEXT, 'variable' => 'dolibarr_id', 'label' => 'Dolibarr user ID'),
 			'SCHOOL_EF_COURSE_DOLIBARR_ID' => array('item' => self::ITEM_COURSE, 'type' => self::TYPE_TEXT, 'variable' => 'dolibarr_id', 'label' => 'Dolibarr product ID'),
 			'SCHOOL_EF_COURSE_PRICE' => array('item' => self::ITEM_COURSE, 'type' => self::TYPE_FLOAT, 'variable' => 'price', 'label' => 'Price'),
 			'SCHOOL_EF_SESSION_DOLIBARR_ID' => array('item' => self::ITEM_SESSION, 'type' => self::TYPE_TEXT, 'variable' => 'dolibarr_id', 'label' => 'Dolibarr product ID'),

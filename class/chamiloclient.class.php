@@ -39,6 +39,8 @@ class ChamiloClient
 	private $allowLocal;
 	/** @var int */
 	private $timeout;
+	/** @var int|null 0 when looked up and not found */
+	private $accessUrlId = null;
 
 	/**
 	 * @param string $baseUrl    Portal URL without "/api"
@@ -136,6 +138,32 @@ class ChamiloClient
 			}
 		}
 		return array_is_list($data) ? $data : array();
+	}
+
+	/**
+	 * Id of the Chamilo portal (access URL) this client talks to: the one whose address has the same host and port as
+	 * the configured URL. Some endpoints, such as the creation of a user, are addressed to a portal.
+	 *
+	 * @return int|null null when no portal matches
+	 */
+	public function accessUrlId(): ?int
+	{
+		if ($this->accessUrlId !== null) {
+			return $this->accessUrlId ?: null;
+		}
+		$res = $this->request('GET', '/api/access_urls', array('itemsPerPage' => 200));
+		$mine = parse_url($this->baseUrl);
+		$found = 0;
+		foreach (ChamiloClient::members($res['ok'] ? $res['data'] : null) as $a) {
+			$theirs = is_array($a) ? parse_url((string) ($a['url'] ?? '')) : false;
+			if ($theirs && $mine && strcasecmp((string) ($theirs['host'] ?? ''), (string) ($mine['host'] ?? '')) === 0
+				&& (int) ($theirs['port'] ?? 0) === (int) ($mine['port'] ?? 0)) {
+				$found = (int) $a['id'];
+				break;
+			}
+		}
+		$this->accessUrlId = $found;
+		return $found ?: null;
 	}
 
 	/**
