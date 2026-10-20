@@ -27,6 +27,7 @@ require_once __DIR__.'/syncqueue.class.php';
 require_once __DIR__.'/schoolsessionsync.class.php';
 require_once __DIR__.'/schoolteachersync.class.php';
 require_once __DIR__.'/schoolstudentsync.class.php';
+require_once __DIR__.'/schoolclasssync.class.php';
 
 /**
  * Cron entry points. Dolibarr instantiates the class with $db, calls the method and reads $output and $error.
@@ -106,6 +107,9 @@ class SchoolCron
 		}
 		if ($job['type'] === 'enrolment' && in_array($job['action'], array('create', 'update', 'delete'), true)) {
 			return (new SchoolStudentSync($this->db))->pushEnrolment($client, (int) $job['object_id']);
+		}
+		if ($job['type'] === 'class' && in_array($job['action'], array('create', 'update'), true)) {
+			return (new SchoolClassSync($this->db))->push($client, (int) $job['object_id']);
 		}
 		if ($job['type'] === 'course_teachers' || $job['type'] === 'session_teachers') {
 			return (new SchoolTeacherSync($this->db))->pushAssignments($client, $job['type'] === 'course_teachers' ? 'course' : 'session', (int) $job['object_id']);

@@ -211,4 +211,34 @@ class SchoolLogicTest extends TestCase
 		$this->assertSame('', schoolStudentEmail('', 'jane@example.org', '', ''));
 		$this->assertSame('', schoolStudentEmail('', '', 'leo.doe', 'bad domain!'));
 	}
+
+	public function testCurrentMember(): void
+	{
+		$this->assertTrue(schoolIsCurrentMember('2026-09-01', null, '2026-10-20'));
+		$this->assertTrue(schoolIsCurrentMember(null, null, '2026-10-20'));
+		// Not started yet.
+		$this->assertFalse(schoolIsCurrentMember('2026-11-01', null, '2026-10-20'));
+		// The end day itself still counts, the day after does not.
+		$this->assertTrue(schoolIsCurrentMember('2026-09-01', '2026-10-20', '2026-10-20'));
+		$this->assertFalse(schoolIsCurrentMember('2026-09-01', '2026-10-19', '2026-10-20'));
+		// A datetime from the database is cut to its date.
+		$this->assertTrue(schoolIsCurrentMember('2026-09-01 00:00:00', '2026-10-20 00:00:00', '2026-10-20'));
+	}
+
+	public function testDistinctRecipients(): void
+	{
+		$links = array(
+			array('contact_email' => 'Jane@Example.org', 'soc_email' => 'family@example.org', 'name' => 'Doe family', 'id' => 1),
+			// Second child of the same parent: same address, different case.
+			array('contact_email' => 'jane@example.org', 'soc_email' => '', 'name' => 'Doe family', 'id' => 1),
+			// No contact address: the third party's is used.
+			array('contact_email' => '', 'soc_email' => 'roe@example.org', 'name' => 'Roe', 'id' => 2),
+			// No address at all: skipped.
+			array('contact_email' => null, 'soc_email' => ' ', 'name' => 'Poe', 'id' => 3),
+		);
+		$r = schoolDistinctRecipients($links);
+		$this->assertSame(array('Jane@Example.org', 'roe@example.org'), array_column($r, 'email'));
+		$this->assertSame(array(1, 2), array_column($r, 'id'));
+		$this->assertSame(array(), schoolDistinctRecipients(array()));
+	}
 }

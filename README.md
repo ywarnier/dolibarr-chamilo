@@ -22,7 +22,8 @@ This is an early version. The plumbing and the catalogue work, the people-relate
 | Creating or editing a course from Dolibarr | Planned |
 | Teachers: Dolibarr employees with a Chamilo account, assigned to courses and sessions | Done |
 | Students and their parents, parents who follow their children in Chamilo, enrolment in courses and sessions | Done |
-| Classes, class announcements, class activity invoicing | Planned (tables exist) |
+| Classes of students, mirrored in Chamilo, and announcements to all the parents of a class | Done |
+| Invoicing an extra activity of a class | Planned (tables exist) |
 | Billing of enrolments | Planned |
 | Rooms and attendance occurrences (Dolibarr Resources module) | Planned |
 | Synchronization from Chamilo to Dolibarr, sync log screen | Planned |
@@ -60,13 +61,15 @@ The module relies on Chamilo API features that are in Chamilo's `master` branch:
 ```text
 core/modules/modSchool.class.php   Module descriptor: rights, menus, cron job, init and remove
 sql/llx_school.sql                 Schema, created on enable and kept on disable
-class/                             ChamiloClient, SyncQueue, SchoolCron, SchoolCatalog, ChamiloSetup, SchoolAccount, SchoolSessionSync, SchoolTeacherSync, SchoolStudent, SchoolStudentSync
+class/                             SchoolClass, SchoolClassSync, ChamiloClient, SyncQueue, SchoolCron, SchoolCatalog, ChamiloSetup, SchoolAccount, SchoolSessionSync, SchoolTeacherSync, SchoolStudent, SchoolStudentSync
 lib/                               school_bootstrap.inc.php (loads Dolibarr), school.lib.php, schoollogic.lib.php (pure rules)
 admin/setup.php                    Connection settings and the "Prepare Chamilo" steps
 index.php course_list.php          Pages
 session_list.php session_card.php
 teacher_list.php assign_teachers.php
 student_list.php student_card.php parent_children.php
+class_list.php class_card.php
+core/modules/mailings/             Recipient selector of the Emailing module: the parents of a class
 core/triggers/                     Queues the update of a teacher's Chamilo account when the Dolibarr user changes
 langs/{en_US,fr_FR}/school.lang    Translations
 test/phpunit/                      Tests of the pure rules

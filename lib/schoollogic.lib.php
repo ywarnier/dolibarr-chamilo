@@ -385,3 +385,49 @@ function schoolStudentEmail(string $own, string $parentEmail, string $username, 
 	}
 	return '';
 }
+
+/**
+ * Whether a class membership counts today. A student who left keeps the row with an end date, so that past invoices and
+ * announcements stay traceable, but is no longer a member from the day after the end date.
+ *
+ * @param string|null $start Start date (YYYY-MM-DD), null when unknown
+ * @param string|null $end   End date (YYYY-MM-DD), null while the student is in the class
+ * @param string      $today Today (YYYY-MM-DD)
+ * @return bool
+ */
+function schoolIsCurrentMember(?string $start, ?string $end, string $today): bool
+{
+	$start = $start !== null ? substr($start, 0, 10) : null;
+	$end = $end !== null ? substr($end, 0, 10) : null;
+	return ($start === null || $start <= $today) && ($end === null || $end >= $today);
+}
+
+/**
+ * Parents to write to when announcing something to a class, without duplicates: a parent of two children in the class
+ * gets one message. The address of the chosen contact is used, else that of the third party. Parents without an
+ * address are skipped.
+ *
+ * @param array<int,array{contact_email?:?string,soc_email?:?string,name?:string,id?:int}> $links Parent links of the current members
+ * @return list<array{email:string,name:string,id:int}> One entry per distinct address (case-insensitive), in order
+ */
+function schoolDistinctRecipients(array $links): array
+{
+	$seen = array();
+	$out = array();
+	foreach ($links as $l) {
+		$email = trim((string) ($l['contact_email'] ?? ''));
+		if ($email === '') {
+			$email = trim((string) ($l['soc_email'] ?? ''));
+		}
+		if ($email === '') {
+			continue;
+		}
+		$key = strtolower($email);
+		if (isset($seen[$key])) {
+			continue;
+		}
+		$seen[$key] = true;
+		$out[] = array('email' => $email, 'name' => (string) ($l['name'] ?? ''), 'id' => (int) ($l['id'] ?? 0));
+	}
+	return $out;
+}

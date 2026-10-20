@@ -195,6 +195,20 @@ class modSchool extends DolibarrModules
 		$this->menu[$r++] = array(
 			'fk_menu' => 'fk_mainmenu=school',
 			'type' => 'left',
+			'titre' => 'SchoolClasses',
+			'mainmenu' => 'school',
+			'leftmenu' => 'schoolclasses',
+			'url' => '/school/class_list.php',
+			'langs' => 'school@school',
+			'position' => 1100 + $r,
+			'enabled' => "isModEnabled('school')",
+			'perms' => $canRead,
+			'target' => '',
+			'user' => 0,
+		);
+		$this->menu[$r++] = array(
+			'fk_menu' => 'fk_mainmenu=school',
+			'type' => 'left',
 			'titre' => 'SchoolTeachers',
 			'mainmenu' => 'school',
 			'leftmenu' => 'schoolteachers',

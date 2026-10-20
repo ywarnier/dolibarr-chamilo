@@ -7,7 +7,7 @@
 | Dolibarr | 24.0 or later (developed against 25.0.0-alpha). The module is meant to be driven through Dolibarr's MCP server as well as through its screens, which sets this minimum. |
 | PHP | 8.1 or later, with the `curl` extension |
 | Database | MySQL or MariaDB. The schema uses MySQL syntax; PostgreSQL is not supported. |
-| Dolibarr modules | Third parties, Products, Services, Agenda (they are enabled with the module if they are off) |
+| Dolibarr modules | Third parties, Products, Services, Agenda (they are enabled with the module if they are off). The Emailing module is needed to send announcements to parents, and is not enabled for you. |
 | Chamilo | A recent `master` (see "Chamilo side" below) |
 
 ## 1. Put the module in Dolibarr
@@ -97,6 +97,7 @@ The module needs these features of Chamilo's `master` branch:
 - the external API key authentication;
 - `PATCH` and `DELETE` on `/api/courses/{id}`, for administrators;
 - `GET /api/usergroups/{id}/subscriptions` and `PUT /api/usergroups/{id}/users`, `/sessions`, `/courses`, for administrators;
+- the class routes `GET /api/usergroups/{id}/subscriptions` and `PUT /api/usergroups/{id}/users`, `/sessions`, `/courses`, for administrators: the Chamilo class of a Dolibarr class is kept up to date through them;
 - `GET /api/sessions/{id}/students` and `POST /api/sessions/{id}/students/subscribe` and `unsubscribe`, for administrators: enrolment in a session goes through them, because the existing session actions follow a platform setting meant for tutors. Without them, enrolling a student in a session fails with a message asking to update Chamilo; enrolment in a course and everything else work;
 - the fix that keeps a session's course counter right when a course is linked through `/api/session_rel_courses`.
 

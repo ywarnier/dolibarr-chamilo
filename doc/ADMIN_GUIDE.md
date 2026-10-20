@@ -75,6 +75,7 @@ UPDATE llx_school_syncqueue SET status = 0, attempts = 0, next_attempt = NOW() W
 - **Teacher accounts**, created with the teacher role (status 1).
 - On every account the `dolibarr_id` extra field holds a typed reference to Dolibarr: `user:<id>` for a teacher, `student:<id>` for a student, `contact:<id>` for a parent. They are three different tables, so a bare number would be ambiguous. The module never changes the role of an account: an account that already exists is linked as it is, and the teacher list shows a warning icon when that account is not a teacher. Nobody can become an administrator through the synchronization.
 - Teachers and coaches of courses and sessions, using Chamilo's own course user actions.
+- **Classes**, as Chamilo classes (user groups of the "normal class" type), through `/api/usergroups`. Each push replaces the whole list of members and of sessions, which is how Chamilo's class routes work. Chamilo enrols the members of a class in the sessions linked to it and takes a student out of them when they leave, so a student who is also enrolled on their own in one of those sessions is taken out of it too when leaving the class. A class is never deleted in Chamilo by this module: archiving a class in Dolibarr leaves it as it is.
 - Enrolments: a student is added to or removed from a course with Chamilo's course user actions, and from a session with `/api/sessions/{id}/students`, which subscribes the student to every course of the session and keeps the other students. Chamilo is read first each time, and nothing is removed that Dolibarr did not name.
 - Accounts that already exist are linked, not changed: by email for a teacher, a parent, and a student who has an own email. An account found by email is never given a role, and a warning icon shows when it does not have the expected one. An email that belongs to a deleted account is refused.
 
@@ -100,6 +101,14 @@ Sessions and courses are service products, with the reference `SCH-C-<course cod
 
 A class is mirrored in Chamilo as a class (user group). Chamilo itself enrols the members of a class in the sessions linked to it, so Dolibarr does not create class enrolments of its own.
 
+## Announcements to parents
+
+The announcement uses Dolibarr's own **Emailing** module: sending, history, templates and unsubscription are its. Enable it in **Home > Setup > Modules** (it is not enabled by this module, because not every school sends announcements from Dolibarr), and give the people who send announcements its rights. The sender is the Emailing module's sender address (`MAILING_EMAIL_FROM`), else `MAIN_MAIL_EMAIL_FROM`, else the email of the user.
+
+From the card of a class, the form prepares a **draft campaign**; nothing is sent until someone validates and sends it in the Emailing module. The recipients are one address per parent of the current members: the contact chosen on the student's card, else the third party's address, without duplicates (compared without regard to case). Parents without an address are skipped, and so are third parties that are disabled. The message typed in the form is plain text: HTML is removed when it is typed.
+
+The same selector, **Parents of the students of a class**, is also offered when you choose recipients in any Emailing campaign.
+
 ## Security notes
 
 - The key is encrypted at rest and never printed back.
@@ -123,6 +132,10 @@ Start with the connection test on the setup page, then the School home page (que
 | A parent row shows "The parent ... has no contact with an email address" | Following a child in Chamilo needs a contact of the third party with an email, because the Chamilo account is created from it |
 | "This Chamilo has no /api/sessions/{id}/students route: update Chamilo" | Your Chamilo does not have the administrator routes for the students of a session yet (see INSTALL.md). Enrolment in courses still works. |
 | "Chamilo cannot enrol this account in a session" | The account is deleted, anonymous or a human resources manager: a parent cannot be enrolled as a student |
+| A class shows "N session(s) of the class are not in Chamilo yet" | A session linked to the class is not in Chamilo: it is retried automatically. Check that the session was created and synchronized. |
+| A class shows "this Chamilo has no /api/usergroups/{id}/... class routes: update Chamilo" | Your Chamilo lacks the administrator routes for classes (see INSTALL.md) |
+| "The Chamilo class no longer exists" | The class was deleted in Chamilo. The module does not create it again by itself. |
+| The announcement form says the Emailing module is off | Enable the Emailing module in the module list |
 | A teacher stays in state *Error*: "The Dolibarr user has no email address" | Add an email to the Dolibarr user, then use **Send again** on the teacher list |
 | "All the usernames tried are taken" | The login and its numbered variants (`jdoe`, `jdoe.2`... up to 5) already exist in Chamilo. Change the Dolibarr login or create the Chamilo account by hand with the teacher's email, then use **Send again**: an account with the same email is linked. |
 | "The Chamilo account no longer exists" | The account was deleted in Chamilo. The module does not create it again by itself, so that a deletion is not silently undone: remove the teacher's link or recreate the account. |

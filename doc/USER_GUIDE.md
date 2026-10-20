@@ -96,6 +96,27 @@ On the student's card, under **Enrolments**, pick a session or a course and pres
 
 Unticking **Active** on the card deactivates the student's Chamilo account; ticking it again reactivates it.
 
+## Classes
+
+A **class** is the students who follow the same sessions for a teaching cycle, and the unit you write to and, later, invoice. **School > Classes** lists them; archived classes are hidden unless you ask.
+
+### Creating a class
+
+Press **New class**, give it a name, and optionally a level, the start and end of the cycle (it does not have to be a school year) and a homeroom teacher. It is created in Chamilo as a class at the next synchronization.
+
+### Members and sessions
+
+On the card of a class:
+
+- **Members**: pick a student and a date, then **Add**. **Remove** takes a student out of the class from now on. The row stays, ended the day before, so the announcements and invoices of that student stay traceable, and the student can join again later. Only the current members are in the Chamilo class.
+- **Sessions of the class**: pick the sessions the class follows. In Chamilo, every member is enrolled in them, so you do not enrol the students one by one. A student who leaves the class is taken out of these sessions.
+
+A student without a Chamilo account yet is left out of the Chamilo class and listed with a warning; they join by themselves when the account is created.
+
+### Announcing something to all the parents
+
+At the bottom of the card of a class, write a subject and a message and press **Prepare the announcement**. The parents of the current members are the recipients: one message per parent, even with several children in the class, to the contact you chose on the student's card or else to the third party. You land on the campaign in the **Emailing** module, which is a draft: check the recipients and the text, then validate and send it there. The Emailing module has to be enabled; ask your administrator if the form says it is not.
+
 ## When something is not synchronized
 
 - A change that waits is normal for a few minutes. Press **Synchronize now** to send it at once.
@@ -108,6 +129,5 @@ Unticking **Active** on the card deactivates the student's Chamilo account; tick
 These are planned and are not available yet:
 
 - creating and editing courses from Dolibarr, and changing a session you created;
-- classes of students, announcements to all the parents of a class, and invoicing an activity of a class;
-- invoicing enrolments;
+- invoicing an activity of a class (a museum visit, for example) to the parents, and invoicing enrolments;
 - rooms and attendance times, using Dolibarr's Resources module.

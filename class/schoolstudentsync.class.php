@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 require_once __DIR__.'/schoolaccount.class.php';
 require_once __DIR__.'/schoolstudent.class.php';
+require_once __DIR__.'/schoolclass.class.php';
 
 /**
  * A student gets a Chamilo account with the student status. A parent who is chosen to follow the child gets an account
@@ -125,6 +126,8 @@ class SchoolStudentSync
 		}
 
 		$this->db->query("UPDATE ".$P."school_student SET sync_status = 1, last_sync = '".$this->db->idate(dol_now())."', last_error = ".($note === '' ? 'NULL' : "'".$this->db->escape($note)."'")." WHERE rowid = ".$studentId);
+		// The classes of the student can now include them, or must exclude them if the account was deactivated.
+		(new SchoolClass($this->db))->queueUpdatesForStudent($studentId);
 		return array('ok' => true, 'error' => '', 'retryable' => false, 'hash' => schoolPayloadHash(array('student' => $studentId, 'links' => count($links))));
 	}
 
@@ -169,8 +172,15 @@ class SchoolStudentSync
 			}
 			$list = $client->request('GET', '/api/sessions/'.$sid.'/students');
 			if (!$list['ok']) {
-				$why = $list['status'] === 404 ? 'This Chamilo has no /api/sessions/{id}/students route: update Chamilo' : 'Read the session students: '.$list['error'];
-				return $fail($why, $list['status'] !== 404 && $list['retryable']);
+				if ($list['status'] === 404) {
+					// Chamilo answers "No route found" when it lacks the route, and "Not found" when the route exists but
+					// the session is not on this portal (a session only managed through another access URL).
+					$noRoute = stripos($list['error'], 'No route found') !== false;
+					return $fail($noRoute
+						? 'This Chamilo has no /api/sessions/{id}/students route: update Chamilo'
+						: 'The session was not found on this Chamilo portal: it may not be linked to the portal this module talks to', false);
+				}
+				return $fail('Read the session students: '.$list['error'], $list['retryable']);
 			}
 			$have = array_map('intval', (array) ($list['data']['userIds'] ?? array()));
 			if (!$toRemove && !in_array($userId, $have, true)) {

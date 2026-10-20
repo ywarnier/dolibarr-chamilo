@@ -5,6 +5,9 @@ All notable changes of the School module. The format follows [Keep a Changelog](
 ## Unreleased
 
 ### Added
+- Classes. A class groups students who follow the same sessions for a teaching cycle, with an optional level, an optional cycle (start and end dates, which need not be a school year), an optional homeroom teacher, and an archived state. A class has members, each with a start date, and follows one or several sessions. A student who leaves keeps the row, ended the day before, so past announcements and invoices stay traceable, and can join again later.
+- The class is mirrored in Chamilo as a class (a user group of the "normal class" type): its name, the sessions it follows and its current members, replaced as a whole through Chamilo's class routes. Chamilo enrols the members of a class in the sessions linked to it and takes a student out of them when they leave the class, so Dolibarr keeps no class-derived enrolment. A member without a Chamilo account yet is left out with a warning, and the class is updated again by itself when the account is created.
+- Announcements to the parents of a class. A recipient selector for Dolibarr's Emailing module, "Parents of the students of a class", adds one address per parent of the current members: a parent of two children in the class gets one message, the contact's address is used before the third party's, and addresses that unsubscribed are marked by Emailing. The class card has a form that prepares a campaign (a draft) with these recipients, which is reviewed and sent in the Emailing module.
 - Students, in their own table: first name, last name, birth date, an optional email, and an active flag. A student gets a Chamilo account with the student role. The username is built from the name with accents folded (`elodie.francois`), with a number added when taken. An inactive student has a deactivated account.
 - The email of a student's account. Chamilo requires one and it must be unique, while a child often has none. Without an address of their own, the account gets the address of the first parent that has one with the username after a plus sign (`parent+leo.doe@example.org`), so the parent receives Chamilo's message to choose a password. When there is no parent address either, `SCHOOL_STUDENT_EMAIL_DOMAIN` gives a placeholder (`leo.doe@school.example`); without it, the student is reported as an error that says how to fix it.
 - Parents. The parents of a student are Dolibarr third parties, with an optional contact, a relation (parent, guardian, other), a payer flag and the share of the cost each pays. A third party's card has a **Children** tab.
@@ -21,6 +24,8 @@ All notable changes of the School module. The format follows [Keep a Changelog](
 - README, INSTALL, administrator guide and user guide.
 
 ### Changed
+- When a student's Chamilo account is created, the classes the student is a member of are updated.
+- A student's enrolment in a session that is not on the Chamilo portal this module talks to now says so, instead of asking to update Chamilo.
 - An email that belongs to a deleted Chamilo account is no longer linked: the account is unusable and keeps its email, so the module reports it instead of linking a dead account.
 - The value of `dolibarr_id` written for teachers is now `user:<id>`. A database that already holds plain ids from an earlier build is corrected by sending the teachers again from the teacher list.
 - `llx_school_course_teacher` and `llx_school_session_teacher` have a `sync_status` column (0 to add in Chamilo, 1 in Chamilo, 3 to remove) instead of `chamilo_link_id`. A database created with an earlier build can be updated by hand:
