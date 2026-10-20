@@ -154,6 +154,10 @@ In **Sessions** or **Courses**, the calendar icon opens the schedule. Under *Add
 ### Attendance
 Teachers record attendance in Chamilo. Dolibarr reads it back about every half hour once a date has taken place: the schedule shows, for each date, how many were present, late and absent, marked *(not final)* until Chamilo says the attendance was taken. The card of a student has an **Attendance** section with their totals and their latest dates.
 
+## Checking that Chamilo agrees
+
+**School > Reconciliation** compares Dolibarr with Chamilo and lists the differences: an account that was deleted in Chamilo, a student who is not enrolled there, a date that was moved or removed, a class whose members differ, and so on. Tick the areas to check and press **Run the check**. What Dolibarr can send again is ticked; press **Send the ticked ones again** to queue it, and follow it in the synchronization log. Nothing is changed by the check itself, and what was deleted in Chamilo is not recreated for you.
+
 ## When something is not synchronized
 
 - A change that waits is normal for a few minutes. Press **Synchronize now** to send it at once.

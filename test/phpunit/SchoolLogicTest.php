@@ -375,4 +375,18 @@ class SchoolLogicTest extends TestCase
 		$this->assertSame(array('present' => 2, 'late' => 2, 'absent' => 1, 'excused' => 1), schoolPresenceTotals(array(1, 1, 2, 3, 0, 4, 9)));
 		$this->assertSame(array('present' => 0, 'late' => 0, 'absent' => 0, 'excused' => 0), schoolPresenceTotals(array()));
 	}
+
+	public function testCompareFields(): void
+	{
+		$this->assertSame(array(), schoolCompareFields(array('a' => 'x', 'n' => 5, 'z' => null), array('a' => ' x ', 'n' => '5', 'extra' => 'ignored')));
+		$this->assertSame(array('a' => array('expected' => 'x', 'actual' => 'y')), schoolCompareFields(array('a' => 'x', 'n' => 1), array('a' => 'y', 'n' => 1)));
+		// Missing in Chamilo counts as empty; an array value is not text.
+		$this->assertSame(array('a' => array('expected' => 'x', 'actual' => '')), schoolCompareFields(array('a' => 'x'), array()));
+		$this->assertSame(array('a' => array('expected' => 'x', 'actual' => '')), schoolCompareFields(array('a' => 'x'), array('a' => array('x'))));
+		// Case matters: a name typed differently is a difference.
+		$this->assertArrayHasKey('a', schoolCompareFields(array('a' => 'Ana'), array('a' => 'ana')));
+		$this->assertSame(array(), schoolCompareFields(array(), array('a' => 1)));
+		// 0 and empty are not the same thing for a flag.
+		$this->assertArrayHasKey('active', schoolCompareFields(array('active' => 0), array()));
+	}
 }

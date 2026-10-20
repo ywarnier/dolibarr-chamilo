@@ -112,6 +112,23 @@ A class is mirrored in Chamilo as a class (user group). Chamilo itself enrols th
 
 The activities of a class are kept in `llx_school_class_activity` and what was invoiced for each in `llx_school_class_activity_invoice`; for enrolments, in `llx_school_enrolment_invoice`.
 
+## Reconciliation
+
+**School > Reconciliation** answers "does Chamilo still say what Dolibarr says?". It only reads: it never writes to Chamilo, and the report is not stored.
+
+| Area | What is compared |
+|---|---|
+| Courses, sessions | Still exist in Chamilo; courses linked to a session; Chamilo items that were never imported |
+| Students, teachers | Chamilo account exists and is not deleted; first name, last name, active flag |
+| Enrolments | The student is in the Chamilo session or course; a student managed by Dolibarr who is in the Chamilo session without being enrolled or in a class that follows it |
+| Classes | Members (current ones) and sessions against the Chamilo class |
+| Rooms | Title, capacity, floor |
+| Dates to come | The date exists in the attendance in Chamilo, with the same start and length |
+
+Each finding is *missing in Chamilo*, *different*, *only in Chamilo* or *could not be checked*. Findings that a new push would fix carry the job that does it (tick boxes, on by default); the others are only information: an account, session, class or room deleted in Chamilo is not created again by itself, an item that exists only in Chamilo is imported from the Courses or Sessions pages, and a date whose attendance was taken in Chamilo is not moved. The jobs are queued, not run: they go through the synchronization queue and appear in the log. Students of a Chamilo session that Dolibarr does not manage are counted, not listed. A session that is not on the portal this module talks to cannot be read and is reported as such. The details of a finding are in English.
+
+Cost: roughly one request per student, teacher and session checked, so use the area boxes on a big school; each area is limited to 300 objects per run.
+
 ## Rooms and schedule
 
 Rooms are rows of **Dolibarr's Resources module** (which the module depends on), flagged as rooms in `llx_school_room` with a floor; the capacity is the resource's own `max_users`. A date of the schedule is an agenda event (`llx_actioncomm`, type *Other*) with the room booked in `llx_element_resources` as busy and the teachers assigned, linked to `llx_school_occurrence`. Deleting an occurrence deletes the event and its bookings.

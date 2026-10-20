@@ -294,6 +294,20 @@ class modSchool extends DolibarrModules
 			'target' => '',
 			'user' => 0,
 		);
+		$this->menu[$r++] = array(
+			'fk_menu' => 'fk_mainmenu=school',
+			'type' => 'left',
+			'titre' => 'SchoolReconcile',
+			'mainmenu' => 'school',
+			'leftmenu' => 'schoolreconcile',
+			'url' => '/school/reconcile.php',
+			'langs' => 'school@school',
+			'position' => 1100 + $r,
+			'enabled' => "isModEnabled('school')",
+			'perms' => '$user->hasRight("school", "sync")',
+			'target' => '',
+			'user' => 0,
+		);
 	}
 
 	/**

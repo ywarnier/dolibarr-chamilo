@@ -654,3 +654,24 @@ function schoolPresenceTotals(array $codes): array
 	}
 	return $totals;
 }
+
+/**
+ * The fields on which two descriptions of the same thing disagree. Values are compared as trimmed text, so 5 and "5 "
+ * agree; a field that is missing from $actual counts as an empty text. Fields only in $actual are not looked at.
+ *
+ * @param array<string,mixed> $expected What Dolibarr holds
+ * @param array<string,mixed> $actual   What Chamilo holds
+ * @return array<string,array{expected:string,actual:string}> Field => both values, only for the fields that differ
+ */
+function schoolCompareFields(array $expected, array $actual): array
+{
+	$diff = array();
+	foreach ($expected as $field => $value) {
+		$want = trim((string) $value);
+		$have = isset($actual[$field]) && !is_array($actual[$field]) ? trim((string) $actual[$field]) : '';
+		if ($want !== $have) {
+			$diff[(string) $field] = array('expected' => $want, 'actual' => $have);
+		}
+	}
+	return $diff;
+}
