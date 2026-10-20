@@ -68,7 +68,7 @@ class modSchool extends DolibarrModules
 		$this->dirs = array();
 		$this->config_page_url = array('setup.php@school');
 		$this->hidden = 0;
-		$this->depends = array('modSociete', 'modProduct', 'modService', 'modAgenda');
+		$this->depends = array('modSociete', 'modProduct', 'modService', 'modAgenda', 'modFacture');
 		$this->requiredby = array();
 		$this->conflictwith = array();
 		$this->langfiles = array('school@school');
@@ -131,6 +131,10 @@ class modSchool extends DolibarrModules
 		$this->rights[$r][0] = 10480207;
 		$this->rights[$r][1] = 'SchoolRightClass';
 		$this->rights[$r][4] = 'class';
+		$r++;
+		$this->rights[$r][0] = 10480208;
+		$this->rights[$r][1] = 'SchoolRightInvoice';
+		$this->rights[$r][4] = 'invoice';
 
 		$canRead = '$user->hasRight("school", "read")';
 		$this->menu = array();
@@ -203,6 +207,20 @@ class modSchool extends DolibarrModules
 			'position' => 1100 + $r,
 			'enabled' => "isModEnabled('school')",
 			'perms' => $canRead,
+			'target' => '',
+			'user' => 0,
+		);
+		$this->menu[$r++] = array(
+			'fk_menu' => 'fk_mainmenu=school',
+			'type' => 'left',
+			'titre' => 'SchoolBilling',
+			'mainmenu' => 'school',
+			'leftmenu' => 'schoolbilling',
+			'url' => '/school/billing.php',
+			'langs' => 'school@school',
+			'position' => 1100 + $r,
+			'enabled' => "isModEnabled('school') && isModEnabled('invoice')",
+			'perms' => '$user->hasRight("school", "invoice")',
 			'target' => '',
 			'user' => 0,
 		);

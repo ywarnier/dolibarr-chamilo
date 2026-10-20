@@ -117,6 +117,27 @@ A student without a Chamilo account yet is left out of the Chamilo class and lis
 
 At the bottom of the card of a class, write a subject and a message and press **Prepare the announcement**. The parents of the current members are the recipients: one message per parent, even with several children in the class, to the contact you chose on the student's card or else to the third party. You land on the campaign in the **Emailing** module, which is a draft: check the recipients and the text, then validate and send it there. The Emailing module has to be enabled; ask your administrator if the form says it is not.
 
+## Billing
+
+**School > Billing** invoices what parents owe. Everything it creates is a **draft invoice**: you check it and validate it in Dolibarr.
+
+### Who pays
+
+On a student's card, tick **Payer** for the parents who pay. Without a payer a student cannot be invoiced. When two parents pay, you give each one's **share** (for example 70 % and 30 %) when invoicing; it is remembered for that child and proposed again next time.
+
+### Invoicing enrolments
+
+1. Open **School > Billing**. It lists the enrolments that are not invoiced yet and whose session or course has a price.
+2. Tick the ones to invoice and press **Review**.
+3. For children with several payers, check or change the shares, and press **Recalculate** to see the amounts. You see the invoices that will be created: **one per paying parent**, with a line per child, so a family with two children gets a single invoice.
+4. Press **Create the draft invoices**, then open them from the result to validate them.
+
+If something is wrong, delete the draft: what it covered is offered again.
+
+### Invoicing an activity of a class
+
+On the card of a class, under **Activities**, give what happened (for example *Museum visit*), the day, and the price per student (or choose a service whose price is used), then **Add the activity**. Press **Invoice** on the activity: the participants are the members of the class that day; untick the children who did not take part, then review and create the drafts as above. An activity is marked *Invoiced* once all its participants are. A late participant can still be invoiced later.
+
 ## When something is not synchronized
 
 - A change that waits is normal for a few minutes. Press **Synchronize now** to send it at once.
@@ -129,5 +150,4 @@ At the bottom of the card of a class, write a subject and a message and press **
 These are planned and are not available yet:
 
 - creating and editing courses from Dolibarr, and changing a session you created;
-- invoicing an activity of a class (a museum visit, for example) to the parents, and invoicing enrolments;
 - rooms and attendance times, using Dolibarr's Resources module.

@@ -431,3 +431,95 @@ function schoolDistinctRecipients(array $links): array
 	}
 	return $out;
 }
+
+/**
+ * Split an amount between payers by percentage so that the parts add up to the amount exactly, to the cent. Each part is
+ * rounded down to the cent and the cents that remain go to the largest fractions, in the order of the keys when equal,
+ * so the result is the same every time. Shares do not have to add up to 100: they are taken as proportions.
+ *
+ * @param float                    $total  Amount to split
+ * @param array<int|string,float>  $shares Percentage of each payer, by key
+ * @return array<int|string,float> Amount of each payer, same keys, in the currency's cents
+ */
+function schoolSplitAmount(float $total, array $shares): array
+{
+	$sum = array_sum($shares);
+	if ($shares === array() || $sum <= 0) {
+		return array_fill_keys(array_keys($shares), 0.0);
+	}
+	$cents = (int) round($total * 100);
+	$parts = array();
+	$fractions = array();
+	foreach ($shares as $key => $share) {
+		$exact = $cents * ($share / $sum);
+		$parts[$key] = (int) floor($exact + 1e-9);
+		$fractions[$key] = $exact - $parts[$key];
+	}
+	$left = $cents - array_sum($parts);
+	$order = array_keys($fractions);
+	usort($order, static function ($a, $b) use ($fractions, $order) {
+		$cmp = $fractions[$b] <=> $fractions[$a];
+		return $cmp !== 0 ? $cmp : array_search($a, $order, true) <=> array_search($b, $order, true);
+	});
+	for ($i = 0; $i < $left; $i++) {
+		$parts[$order[$i % count($order)]]++;
+	}
+	return array_map(static function (int $c): float {
+		return $c / 100;
+	}, $parts);
+}
+
+/**
+ * Shares to propose for the payers of a student. The ones kept from the last time are used when they add up to 100, so a
+ * decision taken once is proposed again. Otherwise a single payer pays everything, and several payers split it equally.
+ *
+ * @param array<int|string,float> $stored Percentage kept for each payer, by key (0 when never set)
+ * @return array<int|string,float> Percentage proposed for each payer, same keys, adding up to 100
+ */
+function schoolProposeShares(array $stored): array
+{
+	if ($stored === array()) {
+		return array();
+	}
+	if (schoolSharesValid($stored)) {
+		return $stored;
+	}
+	$n = count($stored);
+	if ($n === 1) {
+		return array(array_key_first($stored) => 100.0);
+	}
+	// Equal split: the cents of a percent that do not divide go to the first payers.
+	$base = floor(10000 / $n) / 100;
+	$out = array_fill_keys(array_keys($stored), $base);
+	$left = (int) round(10000 - $base * 100 * $n);
+	foreach (array_keys($out) as $key) {
+		if ($left <= 0) {
+			break;
+		}
+		$out[$key] = round($out[$key] + 0.01, 2);
+		$left--;
+	}
+	return $out;
+}
+
+/**
+ * Whether the shares of the payers of a student are acceptable: each between 0 and 100, at least one above 0, and the
+ * total 100 (a cent of a percent of tolerance for what was typed).
+ *
+ * @param array<int|string,float> $shares Percentage of each payer
+ * @return bool
+ */
+function schoolSharesValid(array $shares): bool
+{
+	if ($shares === array()) {
+		return false;
+	}
+	foreach ($shares as $share) {
+		if ($share < 0 || $share > 100) {
+			return false;
+		}
+	}
+	// A margin on top of the cent of a percent: 33.33 three times is 99.99, and in floating point its distance to 100 is
+	// a hair above 0.01.
+	return abs(array_sum($shares) - 100) <= 0.01 + 1e-9 && max($shares) > 0;
+}

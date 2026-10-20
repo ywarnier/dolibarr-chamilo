@@ -31,7 +31,8 @@ Assign them in **Home > Setup > Users and groups**.
 | Run and inspect the Chamilo synchronization (`sync`) | Import from Chamilo, **Synchronize now** |
 | Configure the Chamilo connection (`setup`) | The setup page and its buttons |
 | Manage teachers and their Chamilo accounts (`teacher`) | Enable a Dolibarr employee as a teacher (this creates or links a Chamilo account), choose the teachers of courses and the coaches of sessions. Kept apart from `write` so that not everyone who can edit school data can create Chamilo accounts for staff. |
-| Manage classes, announcements and class activity invoicing (`class`) | Reserved for the class features |
+| Manage classes, announcements and class activities (`class`) | Create and edit classes, members and sessions, prepare announcements, create and delete the activities of a class |
+| Invoice enrolments and class activities to the parents (`invoice`) | Use **School > Billing**. Dolibarr's own right to create invoices is required as well. |
 
 Dolibarr administrators hold every right.
 
@@ -101,6 +102,20 @@ Sessions and courses are service products, with the reference `SCH-C-<course cod
 
 A class is mirrored in Chamilo as a class (user group). Chamilo itself enrols the members of a class in the sessions linked to it, so Dolibarr does not create class enrolments of its own.
 
+## Billing
+
+**School > Billing** turns enrolments and class activities into **draft invoices** in Dolibarr's Invoices module (which the module needs and enables). Nothing is validated or sent: the drafts are reviewed and validated in Dolibarr.
+
+- **What is invoiced.** Enrolments that are not being removed, in a session or course whose product has a price, and the participants of a class activity. The amount excl. tax is the price of the product (a price kept with tax is brought back to excl. tax), or, for an activity, its own price per student, or the price of the service chosen.
+- **Who is invoiced.** The parents ticked **Payer** on the student's card. A student with no payer cannot be invoiced and is listed with a warning. Each paying third party gets **one invoice per run** with one line per child, whatever the number of children.
+- **The shares.** A child with several payers is invoiced to each in proportion to their share. The shares are asked for when invoicing, must add up to 100, and are then kept on the student's parent link and proposed again next time. They are split to the cent so that the parts add up exactly.
+- **Lines.** A line is a service line linked to the product, with the date of the session (start and end) for an enrolment and the day of the activity for an activity; the description names the child and, when several parents pay, the share.
+- **VAT and terms.** The VAT rate is Dolibarr's default for the product, the seller company and the third party, and the payment terms and mode are those of the third party. Set up your company in Dolibarr first (see INSTALL.md).
+- **Nothing is invoiced twice.** What was invoiced is recorded. A recorded invoice that has been **deleted** or **abandoned** no longer counts, so its items can be invoiced again. If only one of two payers' invoices is deleted, only that payer's part is offered again, and the other is not invoiced twice.
+- **Not done.** Orders are not created, only invoices; multi-currency and per-customer prices are not handled; a price discount is entered by editing the draft.
+
+The activities of a class are kept in `llx_school_class_activity` and what was invoiced for each in `llx_school_class_activity_invoice`; for enrolments, in `llx_school_enrolment_invoice`.
+
 ## Announcements to parents
 
 The announcement uses Dolibarr's own **Emailing** module: sending, history, templates and unsubscription are its. Enable it in **Home > Setup > Modules** (it is not enabled by this module, because not every school sends announcements from Dolibarr), and give the people who send announcements its rights. The sender is the Emailing module's sender address (`MAILING_EMAIL_FROM`), else `MAIN_MAIL_EMAIL_FROM`, else the email of the user.
@@ -132,6 +147,9 @@ Start with the connection test on the setup page, then the School home page (que
 | A parent row shows "The parent ... has no contact with an email address" | Following a child in Chamilo needs a contact of the third party with an email, because the Chamilo account is created from it |
 | "This Chamilo has no /api/sessions/{id}/students route: update Chamilo" | Your Chamilo does not have the administrator routes for the students of a session yet (see INSTALL.md). Enrolment in courses still works. |
 | "Chamilo cannot enrol this account in a session" | The account is deleted, anonymous or a human resources manager: a parent cannot be enrolled as a student |
+| Billing says a student "has no paying parent" | No parent of the student is ticked **Payer**: do it on the student's card |
+| Billing refuses the shares | The shares of the paying parents of a child must add up to 100 |
+| An enrolment is not offered for invoicing | Its product has no price, it is being removed, or it is invoiced already (check the invoices of the parents) |
 | A class shows "N session(s) of the class are not in Chamilo yet" | A session linked to the class is not in Chamilo: it is retried automatically. Check that the session was created and synchronized. |
 | A class shows "this Chamilo has no /api/usergroups/{id}/... class routes: update Chamilo" | Your Chamilo lacks the administrator routes for classes (see INSTALL.md) |
 | "The Chamilo class no longer exists" | The class was deleted in Chamilo. The module does not create it again by itself. |

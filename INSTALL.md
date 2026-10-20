@@ -7,7 +7,7 @@
 | Dolibarr | 24.0 or later (developed against 25.0.0-alpha). The module is meant to be driven through Dolibarr's MCP server as well as through its screens, which sets this minimum. |
 | PHP | 8.1 or later, with the `curl` extension |
 | Database | MySQL or MariaDB. The schema uses MySQL syntax; PostgreSQL is not supported. |
-| Dolibarr modules | Third parties, Products, Services, Agenda (they are enabled with the module if they are off). The Emailing module is needed to send announcements to parents, and is not enabled for you. |
+| Dolibarr modules | Third parties, Products, Services, Agenda (they are enabled with the module if they are off). The Invoices module is enabled with it, because billing needs it. The Emailing module is needed to send announcements to parents, and is not enabled for you. |
 | Chamilo | A recent `master` (see "Chamilo side" below) |
 
 ## 1. Put the module in Dolibarr
@@ -53,6 +53,10 @@ On the Chamilo server:
    Copy the key (it starts with `chamilo_ext_`). It is shown once. `--revoke` revokes it.
 
 A key belongs to one Chamilo portal (access URL). A Dolibarr entity talks to one portal.
+
+## 3b. Set up your company in Dolibarr
+
+Invoices use the seller company of Dolibarr: set it in **Home > Setup > Company/Organization** (name, country, VAT number if you have one) before invoicing, as the VAT rate that goes on the lines depends on it. This is a Dolibarr setting, not a School one.
 
 ## 4. Configure the connection
 

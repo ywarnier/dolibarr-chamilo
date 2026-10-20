@@ -241,4 +241,62 @@ class SchoolLogicTest extends TestCase
 		$this->assertSame(array(1, 2), array_column($r, 'id'));
 		$this->assertSame(array(), schoolDistinctRecipients(array()));
 	}
+
+	public function testSplitAmountAddsUpToTheCent(): void
+	{
+		$this->assertSame(array('a' => 100.0), schoolSplitAmount(100.0, array('a' => 100.0)));
+		$this->assertSame(array('a' => 60.0, 'b' => 40.0), schoolSplitAmount(100.0, array('a' => 60.0, 'b' => 40.0)));
+		// 100 / 3 does not divide: 33.34 + 33.33 + 33.33, the extra cent to the first.
+		$r = schoolSplitAmount(100.0, array('a' => 33.33, 'b' => 33.33, 'c' => 33.34));
+		$this->assertEqualsWithDelta(100.0, array_sum($r), 0.0001);
+		$this->assertSame(array(33.33, 33.33, 33.34), array_values($r));
+		// 0.01 between two equal payers: one cent cannot be halved, it goes to the first.
+		$this->assertSame(array('a' => 0.01, 'b' => 0.0), schoolSplitAmount(0.01, array('a' => 50.0, 'b' => 50.0)));
+		// An odd cent is given to the largest fraction, whatever the order.
+		$this->assertSame(array('x' => 50.01, 'y' => 50.0), schoolSplitAmount(100.01, array('x' => 50.0, 'y' => 50.0)));
+		// Amounts that are awkward in binary floating point still add up.
+		foreach (array(19.99, 0.07, 1234.56, 99.995, 0.30) as $total) {
+			$r = schoolSplitAmount($total, array(1 => 33.34, 2 => 33.33, 3 => 33.33));
+			$this->assertEqualsWithDelta(round($total, 2), array_sum($r), 0.0001, 'total '.$total);
+			foreach ($r as $part) {
+				$this->assertEqualsWithDelta(round($part, 2), $part, 1e-9);
+			}
+		}
+		// Shares are proportions: 1 and 3 give a quarter and three quarters.
+		$this->assertSame(array('a' => 25.0, 'b' => 75.0), schoolSplitAmount(100.0, array('a' => 1.0, 'b' => 3.0)));
+		// Nothing to split.
+		$this->assertSame(array('a' => 0.0), schoolSplitAmount(100.0, array('a' => 0.0)));
+		$this->assertSame(array(), schoolSplitAmount(100.0, array()));
+		$this->assertSame(array('a' => 0.0, 'b' => 0.0), schoolSplitAmount(0.0, array('a' => 50.0, 'b' => 50.0)));
+	}
+
+	public function testProposeShares(): void
+	{
+		// What was decided before is proposed again.
+		$this->assertSame(array(5 => 70.0, 9 => 30.0), schoolProposeShares(array(5 => 70.0, 9 => 30.0)));
+		// A single payer pays everything, even when nothing was stored.
+		$this->assertSame(array(5 => 100.0), schoolProposeShares(array(5 => 0.0)));
+		// Several payers with nothing stored: an equal split that adds up to 100.
+		$this->assertSame(array(5 => 50.0, 9 => 50.0), schoolProposeShares(array(5 => 0.0, 9 => 0.0)));
+		$three = schoolProposeShares(array(1 => 0.0, 2 => 0.0, 3 => 0.0));
+		$this->assertEqualsWithDelta(100.0, array_sum($three), 0.0001);
+		$this->assertSame(array(33.34, 33.33, 33.33), array_values($three));
+		// Stored shares that no longer add up (a payer was added) are not reused.
+		$stale = schoolProposeShares(array(5 => 100.0, 9 => 0.0, 11 => 0.0));
+		$this->assertEqualsWithDelta(100.0, array_sum($stale), 0.0001);
+		$this->assertSame(array(), schoolProposeShares(array()));
+	}
+
+	public function testSharesValid(): void
+	{
+		$this->assertTrue(schoolSharesValid(array(1 => 100.0)));
+		$this->assertTrue(schoolSharesValid(array(1 => 60.0, 2 => 40.0)));
+		$this->assertTrue(schoolSharesValid(array(1 => 33.33, 2 => 33.33, 3 => 33.34)));
+		// What was typed with a cent of a percent of difference.
+		$this->assertTrue(schoolSharesValid(array(1 => 33.33, 2 => 33.33, 3 => 33.33)));
+		$this->assertFalse(schoolSharesValid(array(1 => 60.0, 2 => 30.0)));
+		$this->assertFalse(schoolSharesValid(array(1 => 110.0, 2 => -10.0)));
+		$this->assertFalse(schoolSharesValid(array(1 => 0.0)));
+		$this->assertFalse(schoolSharesValid(array()));
+	}
 }

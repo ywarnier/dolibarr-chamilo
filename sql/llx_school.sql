@@ -119,8 +119,6 @@ CREATE TABLE llx_school_enrolment (
 	fk_course integer,
 	status smallint DEFAULT 0 NOT NULL,
 	chamilo_link_id integer,
-	fk_commande integer,
-	fk_facture integer,
 	sync_status smallint DEFAULT 0 NOT NULL,
 	last_sync datetime,
 	last_error text,
@@ -130,6 +128,23 @@ CREATE TABLE llx_school_enrolment (
 	KEY idx_school_enrolment_student (fk_student),
 	KEY idx_school_enrolment_session (fk_session),
 	KEY idx_school_enrolment_course (fk_course)
+) ENGINE=innodb;
+
+-- What was invoiced for an enrolment: one row per paying parent, with the share applied and the draft invoice. The
+-- target is copied (not the enrolment id) so that the history stays when the enrolment is removed. An enrolment counts as
+-- invoiced while a row points to an invoice that exists and is not abandoned.
+CREATE TABLE llx_school_enrolment_invoice (
+	rowid integer AUTO_INCREMENT PRIMARY KEY,
+	fk_student integer NOT NULL,
+	fk_session integer,
+	fk_course integer,
+	fk_soc integer NOT NULL,
+	share double(5,2) NOT NULL,
+	amount double(24,8) NOT NULL,
+	fk_facture integer NOT NULL,
+	datec datetime NOT NULL,
+	KEY idx_school_enrolment_invoice_student (fk_student),
+	KEY idx_school_enrolment_invoice_facture (fk_facture)
 ) ENGINE=innodb;
 
 -- Outgoing sync jobs. status: 0 pending, 1 done, 2 failed for good, 3 running.

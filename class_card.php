@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 require_once __DIR__.'/lib/school_bootstrap.inc.php';
 require_once __DIR__.'/class/schoolclass.class.php';
+require_once __DIR__.'/class/schoolbilling.class.php';
 
 /**
  * @var Conf $conf
@@ -61,7 +62,7 @@ if ($id > 0) {
 }
 
 // Actions: each needs the class right and goes back to the card.
-if (in_array($action, array('add', 'save', 'addstudent', 'removestudent', 'addsession', 'removesession', 'announce', 'resend'), true)) {
+if (in_array($action, array('add', 'save', 'addstudent', 'removestudent', 'addsession', 'removesession', 'announce', 'resend', 'addactivity', 'deleteactivity'), true)) {
 	schoolRequireRight('class');
 
 	if ($action === 'add') {
@@ -85,6 +86,16 @@ if (in_array($action, array('add', 'save', 'addstudent', 'removestudent', 'addse
 			$error = $classes->addSession($id, GETPOSTINT('sessionid'));
 		} elseif ($action === 'removesession') {
 			$error = $classes->removeSession($id, GETPOSTINT('sessionid'));
+		} elseif ($action === 'addactivity') {
+			$res = (new SchoolBilling($db))->createActivity($id, GETPOST('activity_label', 'alphanohtml'), GETPOST('activity_date', 'alphanohtml'), (float) price2num(GETPOST('activity_price', 'alphanohtml')), GETPOSTINT('activity_product'));
+			$error = $res['error'];
+			if ($error === '') {
+				setEventMessages($langs->trans('SchoolActivityCreated'), null);
+				header('Location: '.$cardUrl($id));
+				exit;
+			}
+		} elseif ($action === 'deleteactivity') {
+			$error = (new SchoolBilling($db))->deleteActivity(GETPOSTINT('activityid'));
 		} elseif ($action === 'resend') {
 			(new SyncQueue($db))->enqueue('class', $id, 'update');
 		} elseif ($action === 'announce') {
@@ -123,7 +134,9 @@ if (in_array($action, array('add', 'save', 'addstudent', 'removestudent', 'addse
 			}
 		}
 		if ($action !== 'announce') {
-			setEventMessages($error === '' ? $langs->trans('SchoolQueued') : $say($error), null, $error === '' ? 'mesgs' : 'errors');
+			// Activities are not synchronized: only the others say that the change waits for the next synchronization.
+			$ok = in_array($action, array('addactivity', 'deleteactivity'), true) ? $langs->trans('SchoolDone') : $langs->trans('SchoolQueued');
+			setEventMessages($error === '' ? $ok : $say($error), null, $error === '' ? 'mesgs' : 'errors');
 		}
 		header('Location: '.$cardUrl($id));
 		exit;
@@ -263,6 +276,39 @@ if ($canWrite) {
 		}
 	}
 	print '</select> <input type="submit" class="button" value="'.dol_escape_htmltag($langs->trans('SchoolAddToClass')).'"></form>';
+}
+
+// Activities
+print '<br><br>'.load_fiche_titre($langs->trans('SchoolActivities'), '', '');
+print '<div class="opacitymedium">'.$langs->trans('SchoolActivitiesHelp').'</div><br>';
+print '<table class="noborder centpercent"><tr class="liste_titre"><td>'.$langs->trans('SchoolActivity').'</td><td>'.$langs->trans('Date').'</td><td class="right">'.$langs->trans('SchoolPricePerStudent').'</td><td>'.$langs->trans('Status').'</td><td></td></tr>';
+$aq = $db->query("SELECT a.rowid, a.label, a.date_activity, a.unit_price, a.status, p.label AS product_label FROM {$P}school_class_activity AS a LEFT JOIN {$P}product AS p ON p.rowid = a.fk_product WHERE a.fk_class = {$id} ORDER BY a.date_activity DESC, a.rowid DESC");
+$nba = 0;
+while ($aq && ($o = $db->fetch_object($aq))) {
+	$nba++;
+	print '<tr class="oddeven"><td>'.dol_escape_htmltag($o->label).($o->product_label ? ' <span class="opacitymedium">('.dol_escape_htmltag($o->product_label).')</span>' : '').'</td><td>'.($o->date_activity ? dol_print_date($db->jdate($o->date_activity), 'day') : '').'</td>';
+	print '<td class="right">'.((float) $o->unit_price > 0 ? price((float) $o->unit_price, 0, $langs, 1, -1, -1, $conf->currency) : '<span class="opacitymedium">'.$langs->trans('SchoolProductPrice').'</span>').'</td>';
+	print '<td>'.((int) $o->status === 1 ? $langs->trans('SchoolInvoiced') : $langs->trans('SchoolToInvoice')).'</td><td class="right nowraponall">';
+	if ($user->hasRight('school', 'invoice')) {
+		print '<a class="button smallpaddingimp" href="'.dol_buildpath('/school/billing.php', 1).'?activity='.((int) $o->rowid).'&mainmenu=school&leftmenu=schoolbilling">'.$langs->trans('SchoolInvoice').'</a> ';
+	}
+	if ($canWrite && (int) $o->status !== 1) {
+		print $formOpen('deleteactivity', array('activityid' => (int) $o->rowid)).'<input type="submit" class="button smallpaddingimp" value="'.dol_escape_htmltag($langs->trans('Delete')).'"></form>';
+	}
+	print '</td></tr>';
+}
+if ($nba === 0) {
+	print '<tr class="oddeven"><td colspan="5" class="opacitymedium">'.$langs->trans('SchoolNoActivityYet').'</td></tr>';
+}
+print '</table>';
+if ($canWrite) {
+	print '<br>'.$formOpen('addactivity').'<input type="text" name="activity_label" placeholder="'.dol_escape_htmltag($langs->trans('SchoolActivityLabel')).'" required> <input type="date" name="activity_date" value="'.dol_escape_htmltag($today).'"> ';
+	print '<input type="text" class="width75 right" name="activity_price" placeholder="'.dol_escape_htmltag($langs->trans('SchoolPriceHT')).'"> <select name="activity_product"><option value="0">'.$langs->trans('SchoolNoProduct').'</option>';
+	$pq = $db->query("SELECT rowid, ref, label FROM {$P}product WHERE fk_product_type = 1 AND entity IN (".getEntity('product').") ORDER BY label");
+	while ($pq && ($o = $db->fetch_object($pq))) {
+		print '<option value="'.((int) $o->rowid).'">'.dol_escape_htmltag($o->ref.' - '.$o->label).'</option>';
+	}
+	print '</select> <input type="submit" class="button" value="'.dol_escape_htmltag($langs->trans('SchoolAddActivity')).'"></form> <span class="opacitymedium">'.$langs->trans('SchoolActivityPriceHelp').'</span>';
 }
 
 // Announcement
