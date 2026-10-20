@@ -356,3 +356,4 @@ SchoolKindUnreadable=Vérification impossible
 SchoolReconcileQueue=Renvoyer les éléments cochés
 SchoolReconcileQueueHelp=Ils sont mis en file, puis envoyés à la prochaine synchronisation.
 SchoolReconcileQueued=%s tâche(s) mise(s) en file.
+SchoolInvoiceModuleOff=Le module Factures doit être activé pour créer des factures.

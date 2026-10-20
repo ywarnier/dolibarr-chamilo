@@ -43,20 +43,7 @@ $report = null;
 
 // Queue the jobs chosen in the report. What arrives is checked against the jobs this page can offer, and the object must exist.
 if ($action === 'fix') {
-	$table = array('session' => 'school_session', 'student' => 'school_student', 'teacher' => 'school_teacher', 'enrolment' => 'school_enrolment', 'class' => 'school_class', 'room' => 'school_room', 'occurrence' => 'school_occurrence');
-	$allowed = array('session' => array('update'), 'student' => array('update'), 'teacher' => array('update'), 'enrolment' => array('create'), 'class' => array('update'), 'room' => array('update'), 'occurrence' => array('update'));
-	$queue = new SyncQueue($db);
-	$queued = 0;
-	foreach (array_unique(array_map('strval', (array) GETPOST('fixes', 'array'))) as $spec) {
-		$parts = explode(':', $spec);
-		if (count($parts) !== 3 || !isset($table[$parts[0]]) || !in_array($parts[2], $allowed[$parts[0]], true) || (int) $parts[1] <= 0) {
-			continue;
-		}
-		$q = $db->query("SELECT rowid FROM ".MAIN_DB_PREFIX.$table[$parts[0]]." WHERE rowid = ".((int) $parts[1])." AND entity = ".((int) $conf->entity));
-		if ($q && $db->fetch_object($q) && $queue->enqueue($parts[0], (int) $parts[1], $parts[2]) > 0) {
-			$queued++;
-		}
-	}
+	$queued = SchoolReconcile::queueFixes($db, array_map('strval', (array) GETPOST('fixes', 'array')))['queued'];
 	setEventMessages($langs->trans('SchoolReconcileQueued', $queued), null, $queued > 0 ? 'mesgs' : 'warnings');
 	header('Location: '.dol_buildpath('/school/sync_log.php', 1).'?mainmenu=school&leftmenu=schoolsynclog');
 	exit;

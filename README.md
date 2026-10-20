@@ -29,7 +29,7 @@ This is an early version. The plumbing and the catalogue work, the people-relate
 | Synchronization log screen (retry, filter, purge) | Done |
 | Reconciliation report (differences between Dolibarr and Chamilo, with the jobs that fix them) | Done |
 | Other synchronization from Chamilo to Dolibarr (changes made to courses and sessions in Chamilo) | Planned |
-| MCP tools, so that every feature of the module can be driven through Dolibarr's MCP server | Planned |
+| MCP tools, so that every feature of the module can be driven through Dolibarr's MCP server (see doc/MCP.md) | Done |
 
 See [ChangeLog.md](ChangeLog.md) for what changed in each version.
 
@@ -63,7 +63,7 @@ The module relies on Chamilo API features that are in Chamilo's `master` branch:
 ```text
 core/modules/modSchool.class.php   Module descriptor: rights, menus, cron job, init and remove
 sql/llx_school.sql                 Schema, created on enable and kept on disable
-class/                             SchoolReconcile, SchoolSyncLog, SchoolAttendancePull, SchoolRoom, SchoolRoomSync, SchoolSchedule, SchoolScheduleSync, SchoolBilling, SchoolClass, SchoolClassSync, ChamiloClient, SyncQueue, SchoolCron, SchoolCatalog, ChamiloSetup, SchoolAccount, SchoolSessionSync, SchoolTeacherSync, SchoolStudent, SchoolStudentSync
+class/                             ActionsSchool (hook), mcp/ (the MCP tools), SchoolReconcile, SchoolSyncLog, SchoolAttendancePull, SchoolRoom, SchoolRoomSync, SchoolSchedule, SchoolScheduleSync, SchoolBilling, SchoolClass, SchoolClassSync, ChamiloClient, SyncQueue, SchoolCron, SchoolCatalog, ChamiloSetup, SchoolAccount, SchoolSessionSync, SchoolTeacherSync, SchoolStudent, SchoolStudentSync
 lib/                               school_bootstrap.inc.php (loads Dolibarr), school.lib.php, schoollogic.lib.php (pure rules)
 admin/setup.php                    Connection settings and the "Prepare Chamilo" steps
 index.php course_list.php          Pages

@@ -100,38 +100,13 @@ if (in_array($action, array('add', 'save', 'addstudent', 'removestudent', 'addse
 			(new SyncQueue($db))->enqueue('class', $id, 'update');
 		} elseif ($action === 'announce') {
 			// Prepare a campaign in Dolibarr's Emailing module, with the parents of the class as recipients. It is sent from there.
-			if (!isModEnabled('mailing')) {
-				setEventMessages($langs->trans('SchoolMailingModuleOff'), null, 'errors');
-			} elseif (!$user->hasRight('mailing', 'creer')) {
-				setEventMessages($langs->trans('SchoolMailingNoRight'), null, 'errors');
-			} else {
-				require_once DOL_DOCUMENT_ROOT.'/comm/mailing/class/mailing.class.php';
-				require_once __DIR__.'/core/modules/mailings/school_class_parents.modules.php';
-				$subject = trim(GETPOST('subject', 'alphanohtml'));
-				$message = trim(GETPOST('message', 'restricthtml'));
-				$from = getDolGlobalString('MAILING_EMAIL_FROM') ?: (getDolGlobalString('MAIN_MAIL_EMAIL_FROM') ?: (string) $user->email);
-				if ($subject === '' || $message === '') {
-					setEventMessages($langs->trans('SchoolErrAnnouncementEmpty'), null, 'errors');
-				} elseif ($from === '') {
-					setEventMessages($langs->trans('SchoolErrNoSender'), null, 'errors');
-				} else {
-					$mailing = new Mailing($db);
-					$mailing->title = dol_substr($langs->trans('SchoolAnnouncementTitle', $class->label).' - '.$subject, 0, 200);
-					$mailing->sujet = $subject;
-					$mailing->body = nl2br(dol_escape_htmltag($message));
-					$mailing->email_from = $from;
-					$newId = $mailing->create($user);
-					if ($newId > 0) {
-						$_POST['filter_school_class'] = (string) $id;
-						$selector = new mailing_school_class_parents($db);
-						$added = $selector->add_to_target($newId);
-						setEventMessages($langs->trans('SchoolAnnouncementPrepared', max(0, (int) $added)), null);
-						header('Location: '.DOL_URL_ROOT.'/comm/mailing/card.php?id='.((int) $newId));
-						exit;
-					}
-					setEventMessages($mailing->error ?: $mailing->errors, null, 'errors');
-				}
+			$res = $classes->prepareAnnouncement($user, $id, GETPOST('subject', 'alphanohtml'), GETPOST('message', 'restricthtml'));
+			if ($res['id'] > 0) {
+				setEventMessages($langs->trans('SchoolAnnouncementPrepared', $res['added']), null);
+				header('Location: '.DOL_URL_ROOT.'/comm/mailing/card.php?id='.$res['id']);
+				exit;
 			}
+			setEventMessages(strpos($res['error'], 'School') === 0 ? $langs->trans($res['error']) : $res['error'], null, 'errors');
 		}
 		if ($action !== 'announce') {
 			// Activities are not synchronized: only the others say that the change waits for the next synchronization.

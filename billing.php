@@ -92,16 +92,12 @@ foreach ((array) $posted as $studentId => $row) {
 // ---- Step 3: create the invoices
 $result = null;
 if ($action === 'invoice' && $selected) {
-	$plan = $billing->plan(array_values($selected), $overrides);
-	if ($plan['errors']) {
-		setEventMessages('', array_map($translateError, $plan['errors']), 'errors');
+	$done = $billing->invoice(array_values($selected), $overrides, $user);
+	if ($done['planErrors']) {
+		setEventMessages('', array_map($translateError, $done['planErrors']), 'errors');
 		$action = 'review';
 	} else {
-		// The decision on the shares is kept before invoicing, so that it is proposed again next time.
-		foreach ($plan['shares'] as $studentId => $shares) {
-			$billing->saveShares((int) $studentId, $shares);
-		}
-		$result = $billing->createInvoices($plan, $user);
+		$result = array('created' => $done['created'], 'errors' => $done['errors']);
 	}
 }
 

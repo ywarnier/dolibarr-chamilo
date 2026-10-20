@@ -193,6 +193,98 @@ class SchoolTeacherSync
 	}
 
 	/**
+	 * Set who teaches a course, or who coaches the courses of a session, and queue the push. Only the courses listed in
+	 * $wanted are touched; for each, the teachers not listed are taken off, the ones listed are added. A removal waits for
+	 * the push, which only removes what Chamilo has.
+	 *
+	 * @param string                  $kind   'course' or 'session'
+	 * @param int                     $id     School course id, or school session id
+	 * @param array<int,list<int>>    $wanted School course id => School teacher ids that must be assigned
+	 * @return array{changed:bool,error:string} error is a language key, empty when done
+	 */
+	public function assign(string $kind, int $id, array $wanted): array
+	{
+		global $conf;
+		$P = MAIN_DB_PREFIX;
+		$entity = (int) $conf->entity;
+		$kind = $kind === 'session' ? 'session' : 'course';
+
+		// The courses this target has: itself for a course, its courses for a session.
+		$targets = array();
+		if ($kind === 'course') {
+			$q = $this->db->query("SELECT rowid FROM ".$P."school_course WHERE entity = ".$entity." AND rowid = ".$id);
+			while ($q && ($o = $this->db->fetch_object($q))) {
+				$targets[(int) $o->rowid] = true;
+			}
+		} else {
+			$q = $this->db->query("SELECT sc.fk_course FROM ".$P."school_session_course AS sc INNER JOIN ".$P."school_session AS s ON s.rowid = sc.fk_session WHERE s.entity = ".$entity." AND s.rowid = ".$id);
+			while ($q && ($o = $this->db->fetch_object($q))) {
+				$targets[(int) $o->fk_course] = true;
+			}
+		}
+		if (!$targets) {
+			return array('changed' => false, 'error' => 'SchoolErrNotFound');
+		}
+		foreach (array_keys($wanted) as $courseId) {
+			if (!isset($targets[(int) $courseId])) {
+				return array('changed' => false, 'error' => 'SchoolErrCourseNotInSession');
+			}
+		}
+		$teachers = array();
+		$q = $this->db->query("SELECT rowid FROM ".$P."school_teacher WHERE entity = ".$entity);
+		while ($q && ($o = $this->db->fetch_object($q))) {
+			$teachers[(int) $o->rowid] = true;
+		}
+		foreach ($wanted as $list) {
+			foreach ((array) $list as $teacherId) {
+				if (!isset($teachers[(int) $teacherId])) {
+					return array('changed' => false, 'error' => 'SchoolErrNotFound');
+				}
+			}
+		}
+
+		$table = $kind === 'course' ? 'school_course_teacher' : 'school_session_teacher';
+		$current = array();
+		$q = $this->db->query("SELECT fk_course AS cid, fk_teacher, sync_status FROM ".$P.$table." WHERE ".($kind === 'course' ? 'fk_course' : 'fk_session')." = ".$id);
+		while ($q && ($o = $this->db->fetch_object($q))) {
+			$current[(int) $o->cid][(int) $o->fk_teacher] = (int) $o->sync_status;
+		}
+
+		$changed = false;
+		foreach ($wanted as $courseId => $list) {
+			$courseId = (int) $courseId;
+			$list = array_map('intval', (array) $list);
+			foreach (array_keys($teachers) as $teacherId) {
+				$state = $current[$courseId][$teacherId] ?? null;
+				$isWanted = in_array($teacherId, $list, true);
+				if ($kind === 'course') {
+					$where = "fk_course = ".$courseId." AND fk_teacher = ".$teacherId;
+					$insert = "INSERT INTO ".$P.$table." (fk_course, fk_teacher, sync_status) VALUES (".$courseId.", ".$teacherId.", 0)";
+				} else {
+					$where = "fk_session = ".$id." AND fk_course = ".$courseId." AND fk_teacher = ".$teacherId;
+					$insert = "INSERT INTO ".$P.$table." (fk_session, fk_course, fk_teacher, sync_status) VALUES (".$id.", ".$courseId.", ".$teacherId.", 0)";
+				}
+				if ($isWanted && $state === null) {
+					$this->db->query($insert);
+					$changed = true;
+				} elseif ($isWanted && $state === self::TO_REMOVE) {
+					// Chosen again before the removal was sent: send it as an addition, which checks Chamilo first.
+					$this->db->query("UPDATE ".$P.$table." SET sync_status = 0 WHERE ".$where);
+					$changed = true;
+				} elseif (!$isWanted && $state !== null && $state !== self::TO_REMOVE) {
+					// Even a row that was never confirmed goes through the push, which only removes what Chamilo has.
+					$this->db->query("UPDATE ".$P.$table." SET sync_status = 3 WHERE ".$where);
+					$changed = true;
+				}
+			}
+		}
+		if ($changed) {
+			(new SyncQueue($this->db))->enqueue($kind === 'course' ? 'course_teachers' : 'session_teachers', $id, 'update');
+		}
+		return array('changed' => $changed, 'error' => '');
+	}
+
+	/**
 	 * Replace what a course (or a course of a session) has as teachers by what Dolibarr says. Rows to add are
 	 * subscribed, rows to remove are unsubscribed and deleted. Chamilo is read first because subscribing someone who
 	 * is already there is refused rather than ignored.

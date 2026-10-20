@@ -61,7 +61,7 @@ class modSchool extends DolibarrModules
 			'theme' => 0,
 			'css' => array(),
 			'js' => array(),
-			'hooks' => array(),
+			'hooks' => array('aimcp'),
 			'moduleforexternal' => 0,
 		);
 

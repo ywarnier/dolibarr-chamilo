@@ -287,6 +287,28 @@ class SchoolBilling
 	}
 
 	/**
+	 * Plan the chosen items, keep the shares that were decided so they are proposed again next time, and create the draft
+	 * invoices. Nothing is created when the plan has errors.
+	 *
+	 * @param list<array<string,mixed>>   $items     Items chosen, as billableEnrolments() or activityItems() give them
+	 * @param array<int,array<int,float>> $overrides Shares typed by the user, by student then third party
+	 * @param User                        $user      Who invoices
+	 * @return array{planErrors:list<array<string,mixed>>,created:array<int,int>,errors:list<string>} Invoice id by third party id
+	 */
+	public function invoice(array $items, array $overrides, User $user): array
+	{
+		$plan = $this->plan($items, $overrides);
+		if ($plan['errors']) {
+			return array('planErrors' => $plan['errors'], 'created' => array(), 'errors' => array());
+		}
+		foreach ($plan['shares'] as $studentId => $shares) {
+			$this->saveShares((int) $studentId, $shares);
+		}
+		$result = $this->createInvoices($plan, $user);
+		return array('planErrors' => array(), 'created' => $result['created'], 'errors' => $result['errors']);
+	}
+
+	/**
 	 * Create one draft invoice per third party of the plan, with one line per child, and record what was invoiced. Each
 	 * invoice is created or not at all. Items invoiced meanwhile are skipped.
 	 *

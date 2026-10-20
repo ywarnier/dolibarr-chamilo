@@ -154,6 +154,10 @@ In **Sessions** or **Courses**, the calendar icon opens the schedule. Under *Add
 ### Attendance
 Teachers record attendance in Chamilo. Dolibarr reads it back about every half hour once a date has taken place: the schedule shows, for each date, how many were present, late and absent, marked *(not final)* until Chamilo says the attendance was taken. The card of a student has an **Attendance** section with their totals and their latest dates.
 
+## Using an assistant
+
+If your administrator has enabled Dolibarr's AI assistant or MCP server for you, you can ask it to do most of what this guide describes (create a student, enrol them, add a class, plan the dates of a course, prepare an invoice draft, check the synchronization). It can only do what your rights allow, it asks you to confirm before it changes anything, and what it prepares (an announcement, an invoice) is a draft that you review in Dolibarr as usual.
+
 ## Checking that Chamilo agrees
 
 **School > Reconciliation** compares Dolibarr with Chamilo and lists the differences: an account that was deleted in Chamilo, a student who is not enrolled there, a date that was moved or removed, a class whose members differ, and so on. Tick the areas to check and press **Run the check**. What Dolibarr can send again is ticked; press **Send the ticked ones again** to queue it, and follow it in the synchronization log. Nothing is changed by the check itself, and what was deleted in Chamilo is not recreated for you.

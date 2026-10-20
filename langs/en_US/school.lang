@@ -356,3 +356,4 @@ SchoolKindUnreadable=Could not be checked
 SchoolReconcileQueue=Send the ticked ones again
 SchoolReconcileQueueHelp=They are queued, then sent at the next synchronization.
 SchoolReconcileQueued=%s job(s) queued.
+SchoolInvoiceModuleOff=The Invoices module must be enabled to create invoices.

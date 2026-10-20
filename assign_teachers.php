@@ -82,38 +82,15 @@ while ($resql && ($o = $db->fetch_object($resql))) {
 }
 
 if (GETPOST('action', 'aZ09') === 'save') {
-	$posted = GETPOST('teachers', 'array');
-	$changed = false;
+	$posted = (array) GETPOST('teachers', 'array');
+	$wanted = array();
 	foreach ($targets as $courseId => $label) {
-		$wanted = array_map('intval', (array) ($posted[$courseId] ?? array()));
-		foreach ($teachers as $teacherId => $name) {
-			$state = $current[$courseId][$teacherId] ?? null;
-			$isWanted = in_array($teacherId, $wanted, true);
-			if ($kind === 'course') {
-				$table = 'school_course_teacher';
-				$where = "fk_course = ".$courseId." AND fk_teacher = ".$teacherId;
-				$insert = "INSERT INTO {$P}{$table} (fk_course, fk_teacher, sync_status) VALUES (".$courseId.", ".$teacherId.", 0)";
-			} else {
-				$table = 'school_session_teacher';
-				$where = "fk_session = ".$id." AND fk_course = ".$courseId." AND fk_teacher = ".$teacherId;
-				$insert = "INSERT INTO {$P}{$table} (fk_session, fk_course, fk_teacher, sync_status) VALUES (".$id.", ".$courseId.", ".$teacherId.", 0)";
-			}
-			if ($isWanted && $state === null) {
-				$db->query($insert);
-				$changed = true;
-			} elseif ($isWanted && $state === SchoolTeacherSync::TO_REMOVE) {
-				// Chosen again before the removal was sent: send it as an addition, which checks Chamilo first.
-				$db->query("UPDATE {$P}{$table} SET sync_status = 0 WHERE ".$where);
-				$changed = true;
-			} elseif (!$isWanted && $state !== null && $state !== SchoolTeacherSync::TO_REMOVE) {
-				// Even a row that was never confirmed goes through the push, which only removes what Chamilo has.
-				$db->query("UPDATE {$P}{$table} SET sync_status = 3 WHERE ".$where);
-				$changed = true;
-			}
-		}
+		$wanted[$courseId] = array_map('intval', (array) ($posted[$courseId] ?? array()));
 	}
-	if ($changed) {
-		(new SyncQueue($db))->enqueue($kind === 'course' ? 'course_teachers' : 'session_teachers', $id, 'update');
+	$res = (new SchoolTeacherSync($db))->assign($kind, $id, $wanted);
+	if ($res['error'] !== '') {
+		setEventMessages($langs->trans($res['error']), null, 'errors');
+	} elseif ($res['changed']) {
 		setEventMessages($langs->trans('SchoolAssignmentsQueued'), null);
 	}
 	header('Location: '.$backUrl);

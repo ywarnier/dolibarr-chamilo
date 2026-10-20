@@ -109,6 +109,9 @@ class SchoolClass
 	 */
 	public function addStudent(int $classId, int $studentId, ?string $start): string
 	{
+		if (!$this->exists($classId)) {
+			return 'SchoolErrNotFound';
+		}
 		$today = dol_print_date(dol_now(), '%Y-%m-%d');
 		$start = $start !== null && $this->isDate($start) ? $start : $today;
 		$st = $this->db->query("SELECT rowid FROM ".MAIN_DB_PREFIX."school_student WHERE rowid = ".$studentId);
@@ -155,6 +158,9 @@ class SchoolClass
 	 */
 	public function addSession(int $classId, int $sessionId): string
 	{
+		if (!$this->exists($classId)) {
+			return 'SchoolErrNotFound';
+		}
 		$s = $this->db->query("SELECT rowid FROM ".MAIN_DB_PREFIX."school_session WHERE rowid = ".$sessionId);
 		if (!$s || !$this->db->fetch_object($s)) {
 			return 'SchoolErrNotFound';
@@ -193,6 +199,70 @@ class SchoolClass
 		while ($resql && ($o = $this->db->fetch_object($resql))) {
 			$this->queue((int) $o->fk_class);
 		}
+	}
+
+	/**
+	 * Prepare a draft campaign in Dolibarr's Emailing module, addressed to the parents of the class. It is reviewed and sent
+	 * from the Emailing module: nothing is sent here.
+	 *
+	 * @param User   $user    Who prepares it
+	 * @param int    $classId School class id
+	 * @param string $subject Subject
+	 * @param string $message Plain text message
+	 * @return array{id:int,added:int,error:string} Mailing id and number of recipients; error is a language key or a message
+	 */
+	public function prepareAnnouncement(User $user, int $classId, string $subject, string $message): array
+	{
+		global $langs;
+		$fail = static function (string $error): array {
+			return array('id' => 0, 'added' => 0, 'error' => $error);
+		};
+		if (!isModEnabled('mailing')) {
+			return $fail('SchoolMailingModuleOff');
+		}
+		if (!$user->hasRight('mailing', 'creer')) {
+			return $fail('SchoolMailingNoRight');
+		}
+		$subject = trim($subject);
+		$message = trim($message);
+		if ($subject === '' || $message === '') {
+			return $fail('SchoolErrAnnouncementEmpty');
+		}
+		$from = getDolGlobalString('MAILING_EMAIL_FROM') ?: (getDolGlobalString('MAIN_MAIL_EMAIL_FROM') ?: (string) $user->email);
+		if ($from === '') {
+			return $fail('SchoolErrNoSender');
+		}
+		$q = $this->db->query("SELECT label FROM ".MAIN_DB_PREFIX."school_class WHERE rowid = ".$classId." AND entity = ".((int) $GLOBALS['conf']->entity));
+		$class = $q ? $this->db->fetch_object($q) : null;
+		if (!$class) {
+			return $fail('SchoolErrNotFound');
+		}
+
+		require_once DOL_DOCUMENT_ROOT.'/comm/mailing/class/mailing.class.php';
+		require_once __DIR__.'/../core/modules/mailings/school_class_parents.modules.php';
+		$mailing = new Mailing($this->db);
+		$mailing->title = dol_substr($langs->trans('SchoolAnnouncementTitle', $class->label).' - '.$subject, 0, 200);
+		$mailing->sujet = $subject;
+		$mailing->body = nl2br(dol_escape_htmltag($message));
+		$mailing->email_from = $from;
+		$newId = $mailing->create($user);
+		if ($newId <= 0) {
+			return $fail((string) ($mailing->error ?: implode(', ', (array) $mailing->errors)));
+		}
+		$_POST['filter_school_class'] = (string) $classId;
+		$selector = new mailing_school_class_parents($this->db);
+		return array('id' => (int) $newId, 'added' => max(0, (int) $selector->add_to_target($newId)), 'error' => '');
+	}
+
+	/**
+	 * @param int $classId School class id
+	 * @return bool True when the class exists in this entity
+	 */
+	private function exists(int $classId): bool
+	{
+		global $conf;
+		$q = $this->db->query("SELECT rowid FROM ".MAIN_DB_PREFIX."school_class WHERE rowid = ".$classId." AND entity = ".((int) $conf->entity));
+		return $q && $this->db->fetch_object($q);
 	}
 
 	/**

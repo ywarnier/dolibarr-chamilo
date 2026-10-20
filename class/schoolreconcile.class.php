@@ -90,6 +90,38 @@ class SchoolReconcile
 	}
 
 	/**
+	 * Queue the jobs that findings proposed. What arrives is checked against the jobs a finding can carry and the object
+	 * must exist, so nothing else can be queued through here.
+	 *
+	 * @param DoliDB       $db    Database handler
+	 * @param list<string> $specs Fix values, "type:id:action"
+	 * @return array{queued:int,refused:list<string>}
+	 */
+	public static function queueFixes($db, array $specs): array
+	{
+		global $conf;
+		$table = array('session' => 'school_session', 'student' => 'school_student', 'teacher' => 'school_teacher', 'enrolment' => 'school_enrolment', 'class' => 'school_class', 'room' => 'school_room', 'occurrence' => 'school_occurrence');
+		$allowed = array('session' => 'update', 'student' => 'update', 'teacher' => 'update', 'enrolment' => 'create', 'class' => 'update', 'room' => 'update', 'occurrence' => 'update');
+		$queue = new SyncQueue($db);
+		$queued = 0;
+		$refused = array();
+		foreach (array_unique(array_map('strval', $specs)) as $spec) {
+			$parts = explode(':', $spec);
+			$ok = false;
+			if (count($parts) === 3 && isset($table[$parts[0]]) && $allowed[$parts[0]] === $parts[2] && (int) $parts[1] > 0) {
+				$q = $db->query("SELECT rowid FROM ".MAIN_DB_PREFIX.$table[$parts[0]]." WHERE rowid = ".((int) $parts[1])." AND entity = ".((int) $conf->entity));
+				$ok = $q && $db->fetch_object($q) && $queue->enqueue($parts[0], (int) $parts[1], $parts[2]) > 0;
+			}
+			if ($ok) {
+				$queued++;
+			} else {
+				$refused[] = $spec;
+			}
+		}
+		return array('queued' => $queued, 'refused' => $refused);
+	}
+
+	/**
 	 * @param string                           $area   Area
 	 * @param string                           $label  What the finding is about
 	 * @param string                           $url    Page that shows it, or empty

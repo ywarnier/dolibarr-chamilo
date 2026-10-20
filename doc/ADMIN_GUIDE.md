@@ -112,6 +112,10 @@ A class is mirrored in Chamilo as a class (user group). Chamilo itself enrols th
 
 The activities of a class are kept in `llx_school_class_activity` and what was invoiced for each in `llx_school_class_activity_invoice`; for enrolments, in `llx_school_enrolment_invoice`.
 
+## MCP tools
+
+The module registers 43 tools in Dolibarr's MCP server, so that an AI assistant can do what the screens do. Enable the AI module and its MCP server, give the MCP user the School rights, and disable then enable the School module once so that its hook is registered. Each tool, the right it needs and the rules they follow are in `doc/MCP.md`. Writes that change Chamilo are queued like those of the screens; announcements and invoices are only drafts.
+
 ## Reconciliation
 
 **School > Reconciliation** answers "does Chamilo still say what Dolibarr says?". It only reads: it never writes to Chamilo, and the report is not stored.
