@@ -61,11 +61,7 @@ The School home page shows the number of jobs per status.
 - **No duplicates.** Two identical waiting jobs are merged. A session's Chamilo id is saved as soon as Chamilo has created it, so a retry after a partial failure carries on instead of creating a second session.
 - **A session shows its own state** in the Sessions list: Waiting, Synchronized, or Error (hover to read the message).
 
-To retry a Failed job after fixing the cause, set its status back to 0 (a screen for this is planned):
-
-```sql
-UPDATE llx_school_syncqueue SET status = 0, attempts = 0, next_attempt = NOW() WHERE rowid = <id>;
-```
+**School > Synchronization log** lists the jobs, newest first, with what each is about (a link to the student, class, session...), its status, attempts, next try and message; it can be filtered by status and type. With the `sync` right, a Failed job (or a waiting one that already failed once) can be **tried again** at once, all the failed ones can be retried together, **Synchronize now** runs the queue, and a failed job can be **forgotten** (its object keeps its own error and is sent again when it changes). A running or done job cannot be retried. Jobs done are deleted after `SCHOOL_LOG_KEEP_DAYS` days (30 by default; 0 keeps them all) by the scheduled job.
 
 ## What is created in Chamilo
 

@@ -280,6 +280,20 @@ class modSchool extends DolibarrModules
 			'target' => '',
 			'user' => 0,
 		);
+		$this->menu[$r++] = array(
+			'fk_menu' => 'fk_mainmenu=school',
+			'type' => 'left',
+			'titre' => 'SchoolSyncLog',
+			'mainmenu' => 'school',
+			'leftmenu' => 'schoolsynclog',
+			'url' => '/school/sync_log.php',
+			'langs' => 'school@school',
+			'position' => 1100 + $r,
+			'enabled' => "isModEnabled('school')",
+			'perms' => $canRead,
+			'target' => '',
+			'user' => 0,
+		);
 	}
 
 	/**

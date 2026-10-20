@@ -52,6 +52,7 @@ print '<tr class="oddeven"><td>'.$langs->trans('SchoolQueueRunning').'</td><td c
 print '<tr class="oddeven"><td>'.$langs->trans('SchoolQueueFailed').'</td><td class="right">'.$counts[SyncQueue::FAILED].'</td></tr>';
 print '<tr class="oddeven"><td>'.$langs->trans('SchoolQueueDone').'</td><td class="right">'.$counts[SyncQueue::DONE].'</td></tr>';
 print '</table>';
+print '<br><a href="'.dol_buildpath('/school/sync_log.php', 1).'?mainmenu=school&leftmenu=schoolsynclog">'.$langs->trans('SchoolSyncLog').'</a>';
 
 llxFooter();
 $db->close();

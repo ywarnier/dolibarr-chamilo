@@ -68,6 +68,7 @@ class SchoolCron
 
 		$queue = new SyncQueue($this->db);
 		$queue->releaseStuck();
+		$queue->purgeDone(getDolGlobalInt('SCHOOL_LOG_KEEP_DAYS', 30));
 
 		$done = 0;
 		$retried = 0;

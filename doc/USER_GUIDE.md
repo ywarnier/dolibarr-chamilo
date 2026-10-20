@@ -159,7 +159,7 @@ Teachers record attendance in Chamilo. Dolibarr reads it back about every half h
 - A change that waits is normal for a few minutes. Press **Synchronize now** to send it at once.
 - If Chamilo is unreachable, the module tries again by itself, with longer and longer pauses, for several hours.
 - A session in state *Error* was refused by Chamilo: read the message, correct the data and ask your administrator to send it again.
-- A number under *Failed* on the home page means the same thing for any other change.
+- A number under *Failed* on the home page means the same thing for any other change. **School > Synchronization log** shows each change, what it is about and why it failed, and lets you try it again.
 
 ## What is coming
 

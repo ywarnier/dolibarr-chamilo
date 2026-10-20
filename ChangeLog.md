@@ -5,6 +5,7 @@ All notable changes of the School module. The format follows [Keep a Changelog](
 ## Unreleased
 
 ### Added
+- Synchronization log (**School > Synchronization log**): the jobs of the queue with the object they are about, status, attempts, next try and error message, filters by status and type, retry of a job or of all the failed ones, **Synchronize now**, and forgetting a failed job. The home page links to it. Jobs done are purged after `SCHOOL_LOG_KEEP_DAYS` days (default 30).
 - Attendance read back from Chamilo. Teachers record who was present in Chamilo; the scheduled job now reads that for the dates that have taken place and stores it in `llx_school_presence` (present, late, absent, absent with a reason). A date is read again every 30 minutes until Chamilo says its attendance was taken, then never again; a student who is taken off the sheet disappears here too, and a reading that fails keeps what was stored. Only students known to Dolibarr are kept.
 - The schedule shows the totals of each date, and the card of a student has an **Attendance** section with the totals and the latest dates.
 - Columns `attendance_done` and `last_pull` on `llx_school_occurrence`, and table `llx_school_presence`. **Existing installations**: add the two columns and create the table by hand, as the module reload does not alter existing tables.
@@ -58,6 +59,7 @@ All notable changes of the School module. The format follows [Keep a Changelog](
   ```
 
 ### Fixed
+- A job left running by a crashed run is released after 15 minutes of the database's clock. It was compared with the time in UTC, so on a server whose database is not on UTC it stayed stuck for hours.
 - The test of `schoolWantedUsername()` expected the wrong result for a login with an accented letter (`j doe@école` gives `jdoecole`).
 
 ## 0.1.0 - 2026-10-19

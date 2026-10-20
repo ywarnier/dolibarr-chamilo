@@ -26,7 +26,8 @@ This is an early version. The plumbing and the catalogue work, the people-relate
 | Billing: draft invoices to the paying parents for enrolments and for the extra activities of a class | Done |
 | Rooms (Dolibarr Resources module) and attendance dates, mirrored in Chamilo as rooms and attendance calendars | Done |
 | Attendance read back from Chamilo (who was present at each date) | Done |
-| Other synchronization from Chamilo to Dolibarr, sync log screen | Planned |
+| Synchronization log screen (retry, filter, purge) | Done |
+| Other synchronization from Chamilo to Dolibarr, reconciliation report | Planned |
 | MCP tools, so that every feature of the module can be driven through Dolibarr's MCP server | Planned |
 
 See [ChangeLog.md](ChangeLog.md) for what changed in each version.
@@ -61,7 +62,7 @@ The module relies on Chamilo API features that are in Chamilo's `master` branch:
 ```text
 core/modules/modSchool.class.php   Module descriptor: rights, menus, cron job, init and remove
 sql/llx_school.sql                 Schema, created on enable and kept on disable
-class/                             SchoolAttendancePull, SchoolRoom, SchoolRoomSync, SchoolSchedule, SchoolScheduleSync, SchoolBilling, SchoolClass, SchoolClassSync, ChamiloClient, SyncQueue, SchoolCron, SchoolCatalog, ChamiloSetup, SchoolAccount, SchoolSessionSync, SchoolTeacherSync, SchoolStudent, SchoolStudentSync
+class/                             SchoolSyncLog, SchoolAttendancePull, SchoolRoom, SchoolRoomSync, SchoolSchedule, SchoolScheduleSync, SchoolBilling, SchoolClass, SchoolClassSync, ChamiloClient, SyncQueue, SchoolCron, SchoolCatalog, ChamiloSetup, SchoolAccount, SchoolSessionSync, SchoolTeacherSync, SchoolStudent, SchoolStudentSync
 lib/                               school_bootstrap.inc.php (loads Dolibarr), school.lib.php, schoollogic.lib.php (pure rules)
 admin/setup.php                    Connection settings and the "Prepare Chamilo" steps
 index.php course_list.php          Pages
@@ -69,7 +70,7 @@ session_list.php session_card.php
 teacher_list.php assign_teachers.php
 student_list.php student_card.php parent_children.php
 class_list.php class_card.php billing.php
-room_list.php schedule.php
+room_list.php schedule.php sync_log.php
 core/modules/mailings/             Recipient selector of the Emailing module: the parents of a class
 core/triggers/                     Queues the update of a teacher's Chamilo account when the Dolibarr user changes
 langs/{en_US,fr_FR}/school.lang    Translations

@@ -92,9 +92,9 @@ class SyncQueue
 	 */
 	public function releaseStuck(): int
 	{
-		$limit = $this->db->idate(dol_now() - self::STUCK_MINUTES * 60);
+		// tms is stamped in the database's own time zone, so it is compared with the database's own clock.
 		$sql = "UPDATE ".MAIN_DB_PREFIX."school_syncqueue SET status = ".self::PENDING
-			." WHERE status = ".self::RUNNING." AND tms < '".$limit."'";
+			." WHERE status = ".self::RUNNING." AND tms < DATE_SUB(NOW(), INTERVAL ".self::STUCK_MINUTES." MINUTE)";
 		$resql = $this->db->query($sql);
 		return $resql ? (int) $this->db->affected_rows($resql) : 0;
 	}
@@ -184,5 +184,62 @@ class SyncQueue
 			}
 		}
 		return $counts;
+	}
+
+	/**
+	 * Put a job that waits or failed back in line now, as if it were new. A running or done job is left alone.
+	 *
+	 * @param int $jobId Job id
+	 * @return bool True when the job was put back
+	 */
+	public function retry(int $jobId): bool
+	{
+		global $conf;
+		$res = $this->db->query("UPDATE ".MAIN_DB_PREFIX."school_syncqueue SET status = ".self::PENDING.", attempts = 0, next_attempt = '".$this->db->idate(dol_now())."'"
+			." WHERE rowid = ".$jobId." AND entity = ".((int) $conf->entity)." AND status IN (".self::PENDING.", ".self::FAILED.")");
+		return $res && $this->db->affected_rows($res) > 0;
+	}
+
+	/**
+	 * Put every failed job back in line.
+	 *
+	 * @return int Number of jobs put back
+	 */
+	public function retryAllFailed(): int
+	{
+		global $conf;
+		$res = $this->db->query("UPDATE ".MAIN_DB_PREFIX."school_syncqueue SET status = ".self::PENDING.", attempts = 0, next_attempt = '".$this->db->idate(dol_now())."'"
+			." WHERE entity = ".((int) $conf->entity)." AND status = ".self::FAILED);
+		return $res ? (int) $this->db->affected_rows($res) : 0;
+	}
+
+	/**
+	 * Forget a failed job. The object keeps its error and is sent again the next time it changes.
+	 *
+	 * @param int $jobId Job id
+	 * @return bool True when the job was removed
+	 */
+	public function dismiss(int $jobId): bool
+	{
+		global $conf;
+		$res = $this->db->query("DELETE FROM ".MAIN_DB_PREFIX."school_syncqueue WHERE rowid = ".$jobId." AND entity = ".((int) $conf->entity)." AND status = ".self::FAILED);
+		return $res && $this->db->affected_rows($res) > 0;
+	}
+
+	/**
+	 * Remove the jobs done a long time ago, so the log stays readable and the table small.
+	 *
+	 * @param int $days Age in days; 0 or less keeps everything
+	 * @return int Number of jobs removed
+	 */
+	public function purgeDone(int $days): int
+	{
+		global $conf;
+		if ($days <= 0) {
+			return 0;
+		}
+		$res = $this->db->query("DELETE FROM ".MAIN_DB_PREFIX."school_syncqueue WHERE entity = ".((int) $conf->entity)." AND status = ".self::DONE
+			." AND tms < DATE_SUB(NOW(), INTERVAL ".$days." DAY)");
+		return $res ? (int) $this->db->affected_rows($res) : 0;
 	}
 }
