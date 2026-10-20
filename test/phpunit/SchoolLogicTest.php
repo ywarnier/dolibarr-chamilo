@@ -351,4 +351,28 @@ class SchoolLogicTest extends TestCase
 		$this->assertArrayNotHasKey('capacity', schoolRoomPayload('Lab', null, 1, 0));
 		$this->assertArrayNotHasKey('capacity', schoolRoomPayload('Lab', null, 1, -3));
 	}
+
+	public function testPresences(): void
+	{
+		$this->assertSame('present', schoolPresenceGroup(1));
+		$this->assertSame('late', schoolPresenceGroup(2));
+		$this->assertSame('late', schoolPresenceGroup(3));
+		$this->assertSame('excused', schoolPresenceGroup(4));
+		$this->assertSame('', schoolPresenceGroup(9));
+		$this->assertSame('', schoolPresenceGroup(-1));
+
+		$ok = schoolParsePresences(array('done' => true, 'sheets' => array(array('userId' => 5, 'presence' => 1), array('userId' => 6, 'presence' => 0))));
+		$this->assertSame(array('done' => true, 'presences' => array(5 => 1, 6 => 0)), $ok);
+		// Odd rows are dropped: unknown code, string values, missing keys, user 0, not an array.
+		$odd = schoolParsePresences(array('done' => false, 'sheets' => array(array('userId' => 5, 'presence' => 7), array('userId' => '6', 'presence' => 1), array('userId' => 7), array('userId' => 0, 'presence' => 1), 'x', array('userId' => 8, 'presence' => 4))));
+		$this->assertSame(array('done' => false, 'presences' => array(8 => 4)), $odd);
+		// A missing 'done' means not done; an answer without 'sheets' is not an answer.
+		$this->assertSame(array('done' => false, 'presences' => array()), schoolParsePresences(array('sheets' => array())));
+		$this->assertNull(schoolParsePresences(array('error' => 'nope')));
+		$this->assertNull(schoolParsePresences(null));
+		$this->assertNull(schoolParsePresences(array('sheets' => 'x')));
+
+		$this->assertSame(array('present' => 2, 'late' => 2, 'absent' => 1, 'excused' => 1), schoolPresenceTotals(array(1, 1, 2, 3, 0, 4, 9)));
+		$this->assertSame(array('present' => 0, 'late' => 0, 'absent' => 0, 'excused' => 0), schoolPresenceTotals(array()));
+	}
 }

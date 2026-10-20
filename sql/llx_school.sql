@@ -194,12 +194,26 @@ CREATE TABLE llx_school_occurrence (
 	sync_status smallint DEFAULT 0 NOT NULL,
 	last_sync datetime,
 	last_error text,
+	attendance_done smallint DEFAULT 0 NOT NULL,
+	last_pull datetime,
 	datec datetime NOT NULL,
 	tms timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	fk_user_creat integer,
 	KEY idx_school_occurrence_course (fk_course, fk_session),
 	KEY idx_school_occurrence_start (date_start),
 	KEY idx_school_occurrence_room (fk_room)
+) ENGINE=innodb;
+
+-- What Chamilo recorded for a date, read back by the module. presence: 0 absent, 1 present, 2 late (< 15 min), 3 late (more), 4 absent with a reason.
+CREATE TABLE llx_school_presence (
+	rowid integer AUTO_INCREMENT PRIMARY KEY,
+	entity integer DEFAULT 1 NOT NULL,
+	fk_occurrence integer NOT NULL,
+	fk_student integer NOT NULL,
+	presence smallint NOT NULL,
+	tms timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	UNIQUE KEY uk_school_presence (fk_occurrence, fk_student),
+	KEY idx_school_presence_student (fk_student)
 ) ENGINE=innodb;
 
 -- Outgoing sync jobs. status: 0 pending, 1 done, 2 failed for good, 3 running.

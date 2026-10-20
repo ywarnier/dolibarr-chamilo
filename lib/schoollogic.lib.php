@@ -599,3 +599,58 @@ function schoolRoomPayload(string $title, ?string $description, ?int $floor, ?in
 	}
 	return $payload;
 }
+
+/**
+ * Chamilo's presence codes, as Dolibarr keeps them, and the group each belongs to.
+ * 0 absent, 1 present, 2 late by less than 15 minutes, 3 late by more, 4 absent with a reason.
+ *
+ * @param int $code Presence code of Chamilo
+ * @return string 'present', 'late', 'absent' or 'excused'; '' for a code that is not known
+ */
+function schoolPresenceGroup(int $code): string
+{
+	$groups = array(0 => 'absent', 1 => 'present', 2 => 'late', 3 => 'late', 4 => 'excused');
+	return $groups[$code] ?? '';
+}
+
+/**
+ * What Chamilo answers for the presences of a date, as a list of user id => presence code. Entries that are not a pair
+ * of whole numbers, or whose code is unknown, are left out, so nothing odd is stored.
+ *
+ * @param mixed $data Decoded answer of Chamilo
+ * @return array{done:bool,presences:array<int,int>}|null null when the answer is not what was expected
+ */
+function schoolParsePresences($data): ?array
+{
+	if (!is_array($data) || !array_key_exists('sheets', $data) || !is_array($data['sheets'])) {
+		return null;
+	}
+	$presences = array();
+	foreach ($data['sheets'] as $row) {
+		if (!is_array($row) || !isset($row['userId'], $row['presence']) || !is_int($row['userId']) || !is_int($row['presence'])) {
+			continue;
+		}
+		if ($row['userId'] > 0 && schoolPresenceGroup($row['presence']) !== '') {
+			$presences[$row['userId']] = $row['presence'];
+		}
+	}
+	return array('done' => !empty($data['done']), 'presences' => $presences);
+}
+
+/**
+ * Totals of a list of presence codes by group.
+ *
+ * @param list<int> $codes Presence codes
+ * @return array{present:int,late:int,absent:int,excused:int}
+ */
+function schoolPresenceTotals(array $codes): array
+{
+	$totals = array('present' => 0, 'late' => 0, 'absent' => 0, 'excused' => 0);
+	foreach ($codes as $code) {
+		$group = schoolPresenceGroup((int) $code);
+		if ($group !== '') {
+			$totals[$group]++;
+		}
+	}
+	return $totals;
+}

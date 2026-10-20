@@ -30,6 +30,7 @@ require_once __DIR__.'/schoolstudentsync.class.php';
 require_once __DIR__.'/schoolclasssync.class.php';
 require_once __DIR__.'/schoolroomsync.class.php';
 require_once __DIR__.'/schoolschedulesync.class.php';
+require_once __DIR__.'/schoolattendancepull.class.php';
 
 /**
  * Cron entry points. Dolibarr instantiates the class with $db, calls the method and reads $output and $error.
@@ -84,6 +85,10 @@ class SchoolCron
 		}
 
 		$this->output = 'School sync: '.$done.' done, '.$retried.' to retry, '.$failed.' failed';
+
+		// What Chamilo recorded comes back after what Dolibarr sends, so a new date is not read before it exists.
+		$pull = (new SchoolAttendancePull($this->db))->run($client);
+		$this->output .= '; attendance: '.$pull['updated'].' of '.$pull['checked'].' dates read'.($pull['errors'] ? ', '.count($pull['errors']).' not readable' : '');
 		return 0;
 	}
 

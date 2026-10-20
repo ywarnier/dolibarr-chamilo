@@ -104,6 +104,7 @@ The module needs these features of Chamilo's `master` branch:
 - the class routes `GET /api/usergroups/{id}/subscriptions` and `PUT /api/usergroups/{id}/users`, `/sessions`, `/courses`, for administrators: the Chamilo class of a Dolibarr class is kept up to date through them;
 - `GET /api/sessions/{id}/students` and `POST /api/sessions/{id}/students/subscribe` and `unsubscribe`, for administrators: enrolment in a session goes through them, because the existing session actions follow a platform setting meant for tutors. Without them, enrolling a student in a session fails with a message asking to update Chamilo; enrolment in a course and everything else work;
 - rooms (`/api/rooms`, which needs at least one branch) and attendances (`/api/attendances` with its calendars), for administrators: the schedule goes through them. Nothing else is needed for the schedule; without them the dates stay in Dolibarr and the queue shows the error;
+- `GET /api/c_attendance_calendars/{id}/sheet`, for administrators, which gives the presences recorded for a date (added for the module; the existing route of the web interface is outside the API firewall). Without it the attendance results are not read back, and nothing else is affected;
 - the fix that keeps a session's course counter right when a course is linked through `/api/session_rel_courses`.
 
 ## Troubleshooting

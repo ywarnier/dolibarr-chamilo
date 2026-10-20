@@ -160,7 +160,11 @@ if ($focused) {
 } else {
 	$where = "o.status = ".SchoolSchedule::ACTIVE." AND o.date_start >= '".$db->idate($today)."'".(GETPOSTINT('room') > 0 ? " AND o.fk_room = ".GETPOSTINT('room') : '');
 }
-$sql = "SELECT o.rowid, o.fk_session, o.fk_course, o.fk_room, o.date_start, o.date_end, o.status, o.sync_status, o.last_error, pc.label AS course_label, ps.label AS session_label, x.ref AS room_ref"
+$sql = "SELECT o.rowid, o.fk_session, o.fk_course, o.fk_room, o.date_start, o.date_end, o.status, o.sync_status, o.last_error, o.attendance_done,"
+	." (SELECT COUNT(*) FROM {$P}school_presence AS pr WHERE pr.fk_occurrence = o.rowid AND pr.presence = 1) AS n_present,"
+	." (SELECT COUNT(*) FROM {$P}school_presence AS pr WHERE pr.fk_occurrence = o.rowid AND pr.presence IN (2, 3)) AS n_late,"
+	." (SELECT COUNT(*) FROM {$P}school_presence AS pr WHERE pr.fk_occurrence = o.rowid AND pr.presence IN (0, 4)) AS n_absent,"
+	." pc.label AS course_label, ps.label AS session_label, x.ref AS room_ref"
 	." FROM {$P}school_occurrence AS o INNER JOIN {$P}school_course AS c ON c.rowid = o.fk_course INNER JOIN {$P}product AS pc ON pc.rowid = c.fk_product"
 	." LEFT JOIN {$P}school_session AS s ON s.rowid = o.fk_session AND o.fk_session > 0 LEFT JOIN {$P}product AS ps ON ps.rowid = s.fk_product"
 	." LEFT JOIN {$P}school_room AS r ON r.rowid = o.fk_room LEFT JOIN {$P}resource AS x ON x.rowid = r.fk_resource"
@@ -177,7 +181,7 @@ if (!$focused) {
 	print '</select> <input type="submit" class="button" value="'.dol_escape_htmltag($langs->trans('Search')).'"></form><br><br>';
 }
 
-print '<table class="noborder centpercent"><tr class="liste_titre"><td>'.$langs->trans('SchoolDateAndTime').'</td><td>'.$langs->trans('SchoolDuration').'</td><td>'.$langs->trans($focused && $sessionId <= 0 ? 'SchoolRoom' : 'SchoolCourse').($focused && $sessionId > 0 ? ' / '.$langs->trans('SchoolRoom') : '').'</td><td>'.$langs->trans('SchoolSyncStatus').'</td><td></td></tr>';
+print '<table class="noborder centpercent"><tr class="liste_titre"><td>'.$langs->trans('SchoolDateAndTime').'</td><td>'.$langs->trans('SchoolDuration').'</td><td>'.$langs->trans($focused && $sessionId <= 0 ? 'SchoolRoom' : 'SchoolCourse').($focused && $sessionId > 0 ? ' / '.$langs->trans('SchoolRoom') : '').'</td><td>'.$langs->trans('SchoolSyncStatus').'</td><td>'.$langs->trans('SchoolAttendance').'</td><td></td></tr>';
 $nb = 0;
 while ($resql && ($o = $db->fetch_object($resql))) {
 	$nb++;
@@ -204,6 +208,12 @@ while ($resql && ($o = $db->fetch_object($resql))) {
 	} else {
 		print $langs->trans('SchoolStatusPending');
 	}
+	print '</td><td>';
+	if ((int) $o->n_present + (int) $o->n_late + (int) $o->n_absent > 0) {
+		print $langs->trans('SchoolPresenceSummary', (int) $o->n_present, (int) $o->n_late, (int) $o->n_absent).((int) $o->attendance_done === 1 ? '' : ' <span class="opacitymedium">'.$langs->trans('SchoolNotFinal').'</span>');
+	} elseif ((int) $o->attendance_done === 1) {
+		print $langs->trans('SchoolAttendanceTaken');
+	}
 	print '</td><td class="right nowraponall">';
 	if ($canWrite && $focused && !$removing) {
 		print '<form id="'.$fid.'" method="POST" action="'.dol_escape_htmltag($self).'" class="inline-block"><input type="hidden" name="token" value="'.newToken().'"><input type="hidden" name="action" value="update"><input type="hidden" name="occurrence" value="'.((int) $o->rowid).'"><input type="submit" class="button smallpaddingimp" value="'.dol_escape_htmltag($langs->trans('Save')).'"></form> ';
@@ -212,7 +222,7 @@ while ($resql && ($o = $db->fetch_object($resql))) {
 	print '</td></tr>';
 }
 if ($nb === 0) {
-	print '<tr class="oddeven"><td colspan="5" class="opacitymedium">'.$langs->trans('SchoolNoDateYet').'</td></tr>';
+	print '<tr class="oddeven"><td colspan="6" class="opacitymedium">'.$langs->trans('SchoolNoDateYet').'</td></tr>';
 }
 print '</table>';
 

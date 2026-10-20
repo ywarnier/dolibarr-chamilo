@@ -151,6 +151,9 @@ In **Sessions** or **Courses**, the calendar icon opens the schedule. Under *Add
 - A date for which attendance was already taken in Chamilo cannot be moved or cancelled from here; only its room can change.
 - **School > Schedule** shows all the dates to come, and can be limited to one room.
 
+### Attendance
+Teachers record attendance in Chamilo. Dolibarr reads it back about every half hour once a date has taken place: the schedule shows, for each date, how many were present, late and absent, marked *(not final)* until Chamilo says the attendance was taken. The card of a student has an **Attendance** section with their totals and their latest dates.
+
 ## When something is not synchronized
 
 - A change that waits is normal for a few minutes. Press **Synchronize now** to send it at once.
@@ -163,4 +166,4 @@ In **Sessions** or **Courses**, the calendar icon opens the schedule. Under *Add
 These are planned and are not available yet:
 
 - creating and editing courses from Dolibarr, and changing a session you created;
-- reading attendance (who was present) back from Chamilo.
+- reading other things back from Chamilo (changes made there to courses or sessions).

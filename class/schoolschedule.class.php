@@ -298,6 +298,7 @@ class SchoolSchedule
 			$this->db->query("UPDATE ".MAIN_DB_PREFIX."school_occurrence SET status = ".self::TO_REMOVE.", fk_actioncomm = NULL WHERE rowid = ".$id);
 			(new SyncQueue($this->db))->enqueue('occurrence', $id, 'delete');
 		} else {
+			$this->db->query("DELETE FROM ".MAIN_DB_PREFIX."school_presence WHERE fk_occurrence = ".$id);
 			$this->db->query("DELETE FROM ".MAIN_DB_PREFIX."school_occurrence WHERE rowid = ".$id);
 		}
 		return '';

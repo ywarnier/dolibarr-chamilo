@@ -252,5 +252,29 @@ if ($canWrite) {
 	print '</optgroup></select> <input type="submit" class="button" value="'.dol_escape_htmltag($langs->trans('SchoolEnrol')).'"></form>';
 }
 
+// Attendance, read back from Chamilo
+print '<br><br>'.load_fiche_titre($langs->trans('SchoolAttendance'), '', '');
+$codes = array();
+$aq = $db->query("SELECT pr.presence, o.date_start, o.attendance_done, pc.label AS course_label, ps.label AS session_label"
+	." FROM {$P}school_presence AS pr INNER JOIN {$P}school_occurrence AS o ON o.rowid = pr.fk_occurrence INNER JOIN {$P}school_course AS c ON c.rowid = o.fk_course INNER JOIN {$P}product AS pc ON pc.rowid = c.fk_product"
+	." LEFT JOIN {$P}school_session AS s ON s.rowid = o.fk_session AND o.fk_session > 0 LEFT JOIN {$P}product AS ps ON ps.rowid = s.fk_product"
+	." WHERE pr.fk_student = {$id} AND pr.entity = {$entity} ORDER BY o.date_start DESC LIMIT 200");
+$attRows = array();
+while ($aq && ($a = $db->fetch_object($aq))) {
+	$attRows[] = $a;
+	$codes[] = (int) $a->presence;
+}
+if ($attRows) {
+	$totals = schoolPresenceTotals($codes);
+	print '<div>'.$langs->trans('SchoolPresenceSummaryFull', $totals['present'], $totals['late'], $totals['absent'], $totals['excused']).'</div><br>';
+	print '<table class="noborder centpercent"><tr class="liste_titre"><td>'.$langs->trans('SchoolDateAndTime').'</td><td>'.$langs->trans('SchoolCourse').'</td><td>'.$langs->trans('SchoolAttendance').'</td></tr>';
+	foreach (array_slice($attRows, 0, 30) as $a) {
+		print '<tr class="oddeven"><td>'.dol_print_date($db->jdate($a->date_start), 'dayhour').'</td><td>'.($a->session_label ? dol_escape_htmltag($a->session_label).' - ' : '').dol_escape_htmltag($a->course_label).'</td><td>'.$langs->trans('SchoolPresence'.((int) $a->presence)).((int) $a->attendance_done === 1 ? '' : ' <span class="opacitymedium">'.$langs->trans('SchoolNotFinal').'</span>').'</td></tr>';
+	}
+	print '</table>';
+} else {
+	print '<div class="opacitymedium">'.$langs->trans('SchoolNoAttendanceYet').'</div>';
+}
+
 llxFooter();
 $db->close();

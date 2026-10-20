@@ -76,6 +76,7 @@ class SchoolScheduleSync
 
 		// A date that Chamilo never had has nothing to remove.
 		if ($remove && (int) $o->chamilo_calendar_id <= 0) {
+			$this->db->query("DELETE FROM ".$P."school_presence WHERE fk_occurrence = ".$occurrenceId);
 			$this->db->query("DELETE FROM ".$P."school_occurrence WHERE rowid = ".$occurrenceId);
 			return $this->ok('removed');
 		}
@@ -125,6 +126,7 @@ class SchoolScheduleSync
 				return $fail('Remove the date: '.$res['error'], $res['retryable']);
 			}
 		}
+		$this->db->query("DELETE FROM ".MAIN_DB_PREFIX."school_presence WHERE fk_occurrence = ".((int) $o->rowid));
 		$this->db->query("DELETE FROM ".MAIN_DB_PREFIX."school_occurrence WHERE rowid = ".((int) $o->rowid));
 		return $this->ok('removed');
 	}
