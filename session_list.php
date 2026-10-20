@@ -86,6 +86,7 @@ while ($resql && ($o = $db->fetch_object($resql))) {
 	print '<td>'.implode(', ', array_keys($coaches[(int) $o->rowid] ?? array()));
 	if ($user->hasRight('school', 'teacher') && $o->chamilo_id && (int) $o->nbcourses > 0) {
 		print ' <a href="'.dol_buildpath('/school/assign_teachers.php', 1).'?type=session&id='.((int) $o->rowid).'&mainmenu=school">'.img_picto($langs->trans('SchoolAssign'), 'edit').'</a>';
+		print ' <a href="'.dol_buildpath('/school/schedule.php', 1).'?session='.((int) $o->rowid).'&mainmenu=school&leftmenu=schoolschedule">'.img_picto($langs->trans('SchoolSchedule'), 'calendar').'</a>';
 	}
 	print '</td><td>'.($o->chamilo_id ? '#'.((int) $o->chamilo_id) : '').'</td>';
 	$st = (int) $o->sync_status;

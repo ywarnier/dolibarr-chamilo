@@ -299,4 +299,56 @@ class SchoolLogicTest extends TestCase
 		$this->assertFalse(schoolSharesValid(array(1 => 0.0)));
 		$this->assertFalse(schoolSharesValid(array()));
 	}
+
+	public function testIntervalsOverlapStrictly(): void
+	{
+		$nine = strtotime('2030-01-07 09:00:00');
+		$ten = strtotime('2030-01-07 10:00:00');
+		$eleven = strtotime('2030-01-07 11:00:00');
+		$this->assertTrue(schoolIntervalsOverlap($nine, $ten, $nine, $ten));
+		$this->assertTrue(schoolIntervalsOverlap($nine, $eleven, $ten, $eleven));
+		$this->assertTrue(schoolIntervalsOverlap($nine + 1800, $ten + 1800, $nine, $ten));
+		// Back to back in the same room is not a conflict.
+		$this->assertFalse(schoolIntervalsOverlap($nine, $ten, $ten, $eleven));
+		$this->assertFalse(schoolIntervalsOverlap($ten, $eleven, $nine, $ten));
+		$this->assertFalse(schoolIntervalsOverlap($nine, $ten, $eleven, $eleven + 3600));
+	}
+
+	public function testRecurringDates(): void
+	{
+		// 2030-01-07 is a Monday.
+		$this->assertSame(array('2030-01-07'), schoolRecurringDates('2030-01-07', '2030-01-07'));
+		$this->assertSame(array('2030-01-07', '2030-01-14', '2030-01-21'), schoolRecurringDates('2030-01-07', '2030-01-21'));
+		// Monday and Wednesday.
+		$this->assertSame(array('2030-01-07', '2030-01-09', '2030-01-14', '2030-01-16'), schoolRecurringDates('2030-01-07', '2030-01-17', array(1, 3)));
+		// Every other week, counted from the week of the start.
+		$this->assertSame(array('2030-01-07', '2030-01-21', '2030-02-04'), schoolRecurringDates('2030-01-07', '2030-02-10', array(), 2));
+		// A start on a Wednesday with Monday and Wednesday: the Monday of that week is before the start, so it is not used.
+		$this->assertSame(array('2030-01-09', '2030-01-14', '2030-01-16'), schoolRecurringDates('2030-01-09', '2030-01-16', array(1, 3)));
+		// Every other week from a Wednesday: the following week's Monday belongs to the next week and is skipped.
+		$this->assertSame(array('2030-01-09', '2030-01-21', '2030-01-23'), schoolRecurringDates('2030-01-09', '2030-01-25', array(1, 3), 2));
+		// The start day is not a chosen day: the first date is the next chosen one.
+		$this->assertSame(array('2030-01-11'), schoolRecurringDates('2030-01-07', '2030-01-12', array(5)));
+		// Invalid input, or an end before the start.
+		$this->assertSame(array(), schoolRecurringDates('2030-02-30', '2030-03-01'));
+		$this->assertSame(array(), schoolRecurringDates('soon', '2030-03-01'));
+		$this->assertSame(array(), schoolRecurringDates('2030-03-01', '2030-01-01'));
+		// Days of the week outside 1..7 are ignored.
+		$this->assertSame(array('2030-01-07'), schoolRecurringDates('2030-01-07', '2030-01-13', array(0, 9, 1)));
+		// A cap, so a typo in the end date does not create thousands of events.
+		$this->assertCount(200, schoolRecurringDates('2030-01-01', '2099-12-31', array(1, 2, 3, 4, 5, 6, 7)));
+		$this->assertCount(5, schoolRecurringDates('2030-01-01', '2099-12-31', array(1, 2, 3, 4, 5, 6, 7), 1, 5));
+		// A year of Mondays crossing the end of the year.
+		$all = schoolRecurringDates('2030-12-30', '2031-01-13');
+		$this->assertSame(array('2030-12-30', '2031-01-06', '2031-01-13'), $all);
+	}
+
+	public function testRoomPayload(): void
+	{
+		$this->assertSame(array('title' => 'R001', 'description' => null), schoolRoomPayload(' R001 ', '', null, null));
+		$this->assertSame(array('title' => 'Lab', 'description' => 'Chemistry', 'floorNumber' => 0, 'capacity' => 24), schoolRoomPayload('Lab', ' Chemistry ', 0, 24));
+		// Chamilo refuses a capacity of zero: it is left out.
+		$this->assertArrayNotHasKey('capacity', schoolRoomPayload('Lab', null, 1, 0));
+		$this->assertArrayNotHasKey('capacity', schoolRoomPayload('Lab', null, 1, -3));
+	}
 }

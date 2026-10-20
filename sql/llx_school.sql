@@ -147,6 +147,61 @@ CREATE TABLE llx_school_enrolment_invoice (
 	KEY idx_school_enrolment_invoice_facture (fk_facture)
 ) ENGINE=innodb;
 
+-- A room of the school: a Dolibarr resource (of the Resources module) that is also a room in Chamilo. The capacity is the
+-- resource's own maximum number of users; the floor is kept here because a Dolibarr resource has none.
+CREATE TABLE llx_school_room (
+	rowid integer AUTO_INCREMENT PRIMARY KEY,
+	entity integer DEFAULT 1 NOT NULL,
+	fk_resource integer NOT NULL,
+	floor_number integer,
+	chamilo_room_id integer,
+	sync_status smallint DEFAULT 0 NOT NULL,
+	last_sync datetime,
+	last_error text,
+	datec datetime NOT NULL,
+	tms timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	UNIQUE KEY uk_school_room_resource (entity, fk_resource),
+	KEY idx_school_room_chamilo (chamilo_room_id)
+) ENGINE=innodb;
+
+-- The attendance tool that holds the dates of a course in a session (fk_session = 0 for a course on its own), created in
+-- Chamilo the first time a date has to be sent.
+CREATE TABLE llx_school_attendance (
+	rowid integer AUTO_INCREMENT PRIMARY KEY,
+	entity integer DEFAULT 1 NOT NULL,
+	fk_session integer DEFAULT 0 NOT NULL,
+	fk_course integer NOT NULL,
+	chamilo_attendance_id integer,
+	datec datetime NOT NULL,
+	UNIQUE KEY uk_school_attendance (entity, fk_session, fk_course)
+) ENGINE=innodb;
+
+-- A date of a course (in a session, or on its own), the occurrence of an attendance time. It is an event of the Dolibarr
+-- agenda (fk_actioncomm) with the room reserved as a resource, and an entry of the attendance of the course in Chamilo.
+-- status: 0 active, 3 to remove from Chamilo (the agenda event is already deleted, so the room is free; the row is deleted
+-- once Chamilo has removed the date).
+CREATE TABLE llx_school_occurrence (
+	rowid integer AUTO_INCREMENT PRIMARY KEY,
+	entity integer DEFAULT 1 NOT NULL,
+	fk_session integer DEFAULT 0 NOT NULL,
+	fk_course integer NOT NULL,
+	fk_actioncomm integer,
+	fk_room integer,
+	date_start datetime NOT NULL,
+	date_end datetime NOT NULL,
+	status smallint DEFAULT 0 NOT NULL,
+	chamilo_calendar_id integer,
+	sync_status smallint DEFAULT 0 NOT NULL,
+	last_sync datetime,
+	last_error text,
+	datec datetime NOT NULL,
+	tms timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	fk_user_creat integer,
+	KEY idx_school_occurrence_course (fk_course, fk_session),
+	KEY idx_school_occurrence_start (date_start),
+	KEY idx_school_occurrence_room (fk_room)
+) ENGINE=innodb;
+
 -- Outgoing sync jobs. status: 0 pending, 1 done, 2 failed for good, 3 running.
 CREATE TABLE llx_school_syncqueue (
 	rowid integer AUTO_INCREMENT PRIMARY KEY,

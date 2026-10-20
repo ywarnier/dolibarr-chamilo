@@ -116,6 +116,16 @@ A class is mirrored in Chamilo as a class (user group). Chamilo itself enrols th
 
 The activities of a class are kept in `llx_school_class_activity` and what was invoiced for each in `llx_school_class_activity_invoice`; for enrolments, in `llx_school_enrolment_invoice`.
 
+## Rooms and schedule
+
+Rooms are rows of **Dolibarr's Resources module** (which the module depends on), flagged as rooms in `llx_school_room` with a floor; the capacity is the resource's own `max_users`. A date of the schedule is an agenda event (`llx_actioncomm`, type *Other*) with the room booked in `llx_element_resources` as busy and the teachers assigned, linked to `llx_school_occurrence`. Deleting an occurrence deletes the event and its bookings.
+
+- **Conflicts.** The room check is strict at the ends (a lesson may start when the previous one ends) and ignores cancelled dates. Capacity is only checked when set. Teacher conflicts are warnings.
+- **In Chamilo.** One attendance sheet is kept per session and course (`llx_school_attendance`); each date is identified there by its exact start. A date is created, moved (start, end and room) or removed through the queue (job types `room` and `occurrence`). If Chamilo is not ready (session or course not yet created, no branch), the job waits and tries again; a missing sheet is recreated.
+- **Taken attendance is protected.** If Chamilo says attendance was done for a date, the module does not move or remove it there; the room alone may change. The Dolibarr date then stays marked as waiting and shows the reason.
+- **Branch.** A Chamilo room needs a branch. The setup page offers the branches of Chamilo; *Automatic* picks the only one and fails with a clear message when there are several.
+- **Not done.** Attendance results (who was present) are not read back into Dolibarr yet.
+
 ## Announcements to parents
 
 The announcement uses Dolibarr's own **Emailing** module: sending, history, templates and unsubscription are its. Enable it in **Home > Setup > Modules** (it is not enabled by this module, because not every school sends announcements from Dolibarr), and give the people who send announcements its rights. The sender is the Emailing module's sender address (`MAILING_EMAIL_FROM`), else `MAIN_MAIL_EMAIL_FROM`, else the email of the user.

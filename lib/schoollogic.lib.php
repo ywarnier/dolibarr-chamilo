@@ -523,3 +523,79 @@ function schoolSharesValid(array $shares): bool
 	// a hair above 0.01.
 	return abs(array_sum($shares) - 100) <= 0.01 + 1e-9 && max($shares) > 0;
 }
+
+/**
+ * Whether two time ranges overlap. The test is strict: a class that ends at 10:00 and one that starts at 10:00 in the same
+ * room do not overlap, which Dolibarr's own booking check (inclusive at both ends) would report as a conflict.
+ *
+ * @param int $aStart Start of the first range (timestamp)
+ * @param int $aEnd   End of the first range
+ * @param int $bStart Start of the second range
+ * @param int $bEnd   End of the second range
+ * @return bool
+ */
+function schoolIntervalsOverlap(int $aStart, int $aEnd, int $bStart, int $bEnd): bool
+{
+	return $aStart < $bEnd && $bStart < $aEnd;
+}
+
+/**
+ * Dates of a recurring schedule. From $start to $until included, on the given days of the week, every $everyWeeks weeks
+ * (counted from the week of $start, which begins on Monday). Without days of the week, the day of the week of $start is
+ * used, so a single date is just $start with $until = $start.
+ *
+ * @param string    $start      First day (YYYY-MM-DD)
+ * @param string    $until      Last day (YYYY-MM-DD)
+ * @param list<int> $weekdays   ISO days of the week: 1 Monday ... 7 Sunday
+ * @param int       $everyWeeks 1 for every week, 2 for every other week...
+ * @param int       $max        Most dates returned, so a typo in the end date cannot create thousands of events
+ * @return list<string> Dates (YYYY-MM-DD) in order; empty when a date is invalid or $until is before $start
+ */
+function schoolRecurringDates(string $start, string $until, array $weekdays = array(), int $everyWeeks = 1, int $max = 200): array
+{
+	$from = DateTimeImmutable::createFromFormat('!Y-m-d', $start, new DateTimeZone('UTC'));
+	$to = DateTimeImmutable::createFromFormat('!Y-m-d', $until, new DateTimeZone('UTC'));
+	if (!$from || !$to || $from->format('Y-m-d') !== $start || $to->format('Y-m-d') !== $until || $to < $from) {
+		return array();
+	}
+	$days = array_values(array_unique(array_filter(array_map('intval', $weekdays), static function (int $d): bool {
+		return $d >= 1 && $d <= 7;
+	})));
+	if (!$days) {
+		$days = array((int) $from->format('N'));
+	}
+	$everyWeeks = max(1, $everyWeeks);
+	$firstMonday = $from->modify('-'.((int) $from->format('N') - 1).' days');
+	$out = array();
+	for ($day = $from; $day <= $to && count($out) < $max; $day = $day->modify('+1 day')) {
+		if (!in_array((int) $day->format('N'), $days, true)) {
+			continue;
+		}
+		$weeks = intdiv((int) $firstMonday->diff($day)->days, 7);
+		if ($weeks % $everyWeeks === 0) {
+			$out[] = $day->format('Y-m-d');
+		}
+	}
+	return $out;
+}
+
+/**
+ * What Chamilo's room takes from a room of the school.
+ *
+ * @param string      $title       Name of the room
+ * @param string|null $description Description
+ * @param int|null    $floor       Floor
+ * @param int|null    $capacity    Capacity, kept only when positive (Chamilo refuses zero)
+ * @return array<string,mixed>
+ */
+function schoolRoomPayload(string $title, ?string $description, ?int $floor, ?int $capacity): array
+{
+	$payload = array('title' => trim($title), 'description' => trim((string) $description) !== '' ? trim((string) $description) : null);
+	if ($floor !== null) {
+		$payload['floorNumber'] = $floor;
+	}
+	if ($capacity !== null && $capacity > 0) {
+		$payload['capacity'] = $capacity;
+	}
+	return $payload;
+}

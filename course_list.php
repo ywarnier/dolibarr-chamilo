@@ -84,6 +84,7 @@ while ($resql && ($o = $db->fetch_object($resql))) {
 	print '<td>'.implode(', ', $teachers[(int) $o->rowid] ?? array());
 	if ($user->hasRight('school', 'teacher') && $o->chamilo_id) {
 		print ' <a href="'.dol_buildpath('/school/assign_teachers.php', 1).'?type=course&id='.((int) $o->rowid).'&mainmenu=school">'.img_picto($langs->trans('SchoolAssign'), 'edit').'</a>';
+		print ' <a href="'.dol_buildpath('/school/schedule.php', 1).'?course='.((int) $o->rowid).'&mainmenu=school&leftmenu=schoolschedule">'.img_picto($langs->trans('SchoolSchedule'), 'calendar').'</a>';
 	}
 	print '</td>';
 	print '<td>'.($o->chamilo_id ? '#'.((int) $o->chamilo_id).' '.dol_escape_htmltag($o->code) : '').'</td>';

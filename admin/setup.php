@@ -49,6 +49,7 @@ if ($action === 'save') {
 	} else {
 		dolibarr_set_const($db, 'SCHOOL_CHAMILO_URL', $url, 'chaine', 0, '', (int) $conf->entity);
 		dolibarr_set_const($db, 'SCHOOL_CHAMILO_ALLOW_LOCAL', GETPOST('SCHOOL_CHAMILO_ALLOW_LOCAL', 'int') ? '1' : '0', 'chaine', 0, '', (int) $conf->entity);
+		dolibarr_set_const($db, 'SCHOOL_CHAMILO_BRANCH_ID', (string) max(0, (int) GETPOST('SCHOOL_CHAMILO_BRANCH_ID', 'int')), 'chaine', 0, '', (int) $conf->entity);
 		// An empty key field keeps the stored key.
 		$key = trim(GETPOST('SCHOOL_CHAMILO_API_KEY', 'alphanohtml'));
 		if ($key !== '') {
@@ -120,6 +121,24 @@ print '<tr class="oddeven"><td>'.$langs->trans('SchoolChamiloApiKey').'<br><span
 print '<td><input type="password" class="minwidth400" name="SCHOOL_CHAMILO_API_KEY" value="" autocomplete="new-password" placeholder="'.(schoolGetApiKey() !== '' ? dol_escape_htmltag($langs->trans('SchoolKeyStored')) : 'chamilo_ext_...').'"></td></tr>';
 print '<tr class="oddeven"><td>'.$langs->trans('SchoolAllowLocal').'<br><span class="opacitymedium">'.$langs->trans('SchoolAllowLocalHelp').'</span></td>';
 print '<td><input type="checkbox" name="SCHOOL_CHAMILO_ALLOW_LOCAL" value="1"'.(getDolGlobalInt('SCHOOL_CHAMILO_ALLOW_LOCAL') ? ' checked' : '').'></td></tr>';
+print '<tr class="oddeven"><td>'.$langs->trans('SchoolBranch').'<br><span class="opacitymedium">'.$langs->trans('SchoolBranchHelp').'</span></td><td><select name="SCHOOL_CHAMILO_BRANCH_ID"><option value="0">'.$langs->trans('SchoolBranchAuto').'</option>';
+$branchClient = schoolGetClient();
+$branchSet = getDolGlobalInt('SCHOOL_CHAMILO_BRANCH_ID');
+$branchSeen = false;
+if ($branchClient !== null) {
+	$bres = $branchClient->request('GET', '/api/branches', array('itemsPerPage' => 50));
+	foreach ($bres['ok'] ? ChamiloClient::members($bres['data']) : array() as $b) {
+		if (empty($b['id'])) {
+			continue;
+		}
+		$branchSeen = $branchSeen || (int) $b['id'] === $branchSet;
+		print '<option value="'.((int) $b['id']).'"'.((int) $b['id'] === $branchSet ? ' selected' : '').'>'.dol_escape_htmltag((string) ($b['title'] ?? $b['name'] ?? '#'.$b['id'])).' (#'.((int) $b['id']).')</option>';
+	}
+}
+if ($branchSet > 0 && !$branchSeen) {
+	print '<option value="'.$branchSet.'" selected>#'.$branchSet.'</option>';
+}
+print '</select></td></tr>';
 print '</table>';
 print '<div class="center"><input type="submit" class="button button-save" value="'.dol_escape_htmltag($langs->trans('Save')).'"></div>';
 print '</form>';

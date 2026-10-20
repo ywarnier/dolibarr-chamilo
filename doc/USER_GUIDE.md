@@ -138,6 +138,19 @@ If something is wrong, delete the draft: what it covered is offered again.
 
 On the card of a class, under **Activities**, give what happened (for example *Museum visit*), the day, and the price per student (or choose a service whose price is used), then **Add the activity**. Press **Invoice** on the activity: the participants are the members of the class that day; untick the children who did not take part, then review and create the drafts as above. An activity is marked *Invoiced* once all its participants are. A late participant can still be invoiced later.
 
+## Rooms and schedule
+
+### Rooms
+**School > Rooms** lists the rooms. Create the room in the Resources module (the link is on the page) or pick an existing resource under *Use a resource as a room*, with its capacity and floor. *Import the rooms of Chamilo* brings in the rooms that already exist there. The calendar icon opens the room's planning.
+
+### Dates of a session or a course
+In **Sessions** or **Courses**, the calendar icon opens the schedule. Under *Add dates*, choose the course (for a session), the first day and, for a series, the last day, the weekdays and the number of weeks between two dates (1 = every week), then the start time, the duration in minutes and the room.
+
+- If the room is busy on some dates, nothing is created unless you tick *Skip the dates when the room is busy*; the skipped dates are listed.
+- Each date can then be changed (day, time, duration, room) with **Save**, or **Cancel**led. The dates reach Chamilo as the attendance dates of the course, with their room.
+- A date for which attendance was already taken in Chamilo cannot be moved or cancelled from here; only its room can change.
+- **School > Schedule** shows all the dates to come, and can be limited to one room.
+
 ## When something is not synchronized
 
 - A change that waits is normal for a few minutes. Press **Synchronize now** to send it at once.
@@ -150,4 +163,4 @@ On the card of a class, under **Activities**, give what happened (for example *M
 These are planned and are not available yet:
 
 - creating and editing courses from Dolibarr, and changing a session you created;
-- rooms and attendance times, using Dolibarr's Resources module.
+- reading attendance (who was present) back from Chamilo.

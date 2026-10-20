@@ -68,7 +68,7 @@ class modSchool extends DolibarrModules
 		$this->dirs = array();
 		$this->config_page_url = array('setup.php@school');
 		$this->hidden = 0;
-		$this->depends = array('modSociete', 'modProduct', 'modService', 'modAgenda', 'modFacture');
+		$this->depends = array('modSociete', 'modProduct', 'modService', 'modAgenda', 'modFacture', 'modResource');
 		$this->requiredby = array();
 		$this->conflictwith = array();
 		$this->langfiles = array('school@school');
@@ -248,6 +248,34 @@ class modSchool extends DolibarrModules
 			'langs' => 'school@school',
 			'position' => 1100 + $r,
 			'enabled' => "isModEnabled('school')",
+			'perms' => $canRead,
+			'target' => '',
+			'user' => 0,
+		);
+		$this->menu[$r++] = array(
+			'fk_menu' => 'fk_mainmenu=school',
+			'type' => 'left',
+			'titre' => 'SchoolSchedule',
+			'mainmenu' => 'school',
+			'leftmenu' => 'schoolschedule',
+			'url' => '/school/schedule.php',
+			'langs' => 'school@school',
+			'position' => 1100 + $r,
+			'enabled' => "isModEnabled('school') && isModEnabled('resource')",
+			'perms' => $canRead,
+			'target' => '',
+			'user' => 0,
+		);
+		$this->menu[$r++] = array(
+			'fk_menu' => 'fk_mainmenu=school',
+			'type' => 'left',
+			'titre' => 'SchoolRooms',
+			'mainmenu' => 'school',
+			'leftmenu' => 'schoolrooms',
+			'url' => '/school/room_list.php',
+			'langs' => 'school@school',
+			'position' => 1100 + $r,
+			'enabled' => "isModEnabled('school') && isModEnabled('resource')",
 			'perms' => $canRead,
 			'target' => '',
 			'user' => 0,
