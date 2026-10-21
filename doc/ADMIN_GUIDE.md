@@ -8,6 +8,10 @@ Contents: [Settings](#settings) · [Rights](#rights) · [The Chamilo service acc
 
 Everything is on **Home > Setup > Modules/Applications > School (wrench icon)**.
 
+![The School setup page](assets/setup.png)
+
+*The School setup page (**Home > Setup > Modules/Applications > School**). The key field is never filled in again after saving.*
+
 | Setting | Constant | Notes |
 |---|---|---|
 | Chamilo portal URL | `SCHOOL_CHAMILO_URL` | Address of the portal without `/api`. Must start with `http://` or `https://`. A trailing slash or `/api` is removed. |
@@ -81,6 +85,10 @@ Assign them in **Home > Setup > Users and groups** (a user or a group, tab *Perm
 | Administrator of the connection | `setup` (and `sync` to test it) |
 | An AI assistant (MCP user) | See "MCP tools": only the rights of what you want it to do |
 
+![Rights of an assistant user](assets/rights-assistant.png)
+
+*Rights of an assistant's user in **Users and groups > Permissions**: the School rights it needs for reading, writing, classes, invoicing and synchronization, the Invoices *create* right, and neither *Delete* nor *Configure*.*
+
 ## The Chamilo service account
 
 The key belongs to a Chamilo account, and the module acts with that account's permissions. It must be an **administrator**: creating sessions and extra fields, changing courses and managing class subscriptions are administrator operations in Chamilo's API. Use a dedicated account (for example `dolibarr-sync`), not a person's account, so that revoking the key or deactivating the account stops the synchronization without affecting anyone.
@@ -107,6 +115,10 @@ The School home page shows the number of jobs per status.
 - **A session shows its own state** in the Sessions list: Waiting, Synchronized, or Error (hover to read the message).
 
 **School > Synchronization log** lists the jobs, newest first, with what each is about (a link to the student, class, session...), its status, attempts, next try and message; it can be filtered by status and type. With the `sync` right, a Failed job (or a waiting one that already failed once) can be **tried again** at once, all the failed ones can be retried together, **Synchronize now** runs the queue, and a failed job can be **forgotten** (its object keeps its own error and is sent again when it changes). A running or done job cannot be retried. Jobs done are deleted after `SCHOOL_LOG_KEEP_DAYS` days (30 by default; 0 keeps them all) by the scheduled job.
+
+![The synchronization log](assets/sync-log.png)
+
+*The synchronization log (see also the user guide).*
 
 ## What is created in Chamilo
 
@@ -186,6 +198,10 @@ The module adds 43 tools to Dolibarr's MCP server, so that an AI assistant (an M
    - **The shared server key** of the MCP Server page, with a **service user** chosen on the same page. Every call runs as that user. Create a dedicated user for it (Dolibarr recommends it) and give it only the rights it needs; name it so that the log is clear (for example `aibot`).
 3. Dolibarr's AI assistant (the chat) uses the same tools and acts as the user who is logged in.
 
+![The MCP server page of the AI module](assets/mcp-server.png)
+
+*The MCP Server page of the AI module: enable the server, choose the service user and see the endpoint. The key is hidden in this image; never publish it.*
+
 An administrator user can do everything: never use one for an assistant.
 
 ### Rights of the assistant
@@ -209,6 +225,10 @@ If the Emailing module is off, its right does not exist and the announcement too
 ### Which tools the assistant may use
 
 **Setup > AI > tool access** (the page that lists the discovered tools, with the presets *View only*, *Modify* and *All tools*, for the MCP server and for the chat assistant) restricts the tools. Two things to know:
+
+![The tool access page](assets/mcp-tools.png)
+
+*The tool access page: School tools labelled *View only* or *Modify*, with a switch per tool for the MCP server and for the chat assistant.*
 
 - Dolibarr labels a tool **Modify** when its name starts with `create`, `update`, `delete`, `add`, `remove`, `change`, `write`, `edit`, `validate`, `pay` or `send`, and lets the *View only* preset allow every other name. The School tools respect this: every tool that writes starts with one of these verbs, and a tool that only reads does not (`test/cli/mcp_tools_check.php` checks it).
 - Until someone saves the list on that page, **all tools are allowed**. Once it is saved, the list is explicit (`AI_MCP_SERVER_ALLOWED_TOOLS`, or `AI_ASSISTANT_ALLOWED_TOOLS` for the chat): tools that appear later, for example after a School update, are **not** allowed until you tick them. A School tool that "does not exist" or "is not available in this tool context" for the assistant is almost always that.

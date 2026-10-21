@@ -42,9 +42,17 @@ If an entry is missing, you lack that right: ask your administrator. A button yo
 
 Shows whether Dolibarr is connected to Chamilo, and the synchronization queue: how many changes are *Waiting*, *Running*, *Failed* or *Done*. A number above zero under *Failed* means a change could not reach Chamilo: open the **Synchronization log** (the link is on the page) to see which and why.
 
+![The School home page](assets/home.png)
+
+*The School home page: connection state and the synchronization queue.*
+
 ## Courses
 
 **School > Courses** lists the Chamilo courses that Dolibarr knows: reference, label, language, Chamilo id, date of the last synchronization. The reference opens the service product.
+
+![The Courses page](assets/courses.png)
+
+*The Courses page, with Import from Chamilo, the teachers pencil and the schedule icon.*
 
 | Option | In Dolibarr | In Chamilo |
 |---|---|---|
@@ -57,6 +65,10 @@ After importing, set the price of the courses you sell and mark them for sale, f
 ## Sessions
 
 **School > Sessions** lists the sessions: display dates, access dates, number of courses, Chamilo id and synchronization state.
+
+![The Sessions page](assets/sessions.png)
+
+*The Sessions page: state of each session, New session and Synchronize now.*
 
 | State | Meaning |
 |---|---|
@@ -75,6 +87,10 @@ After importing, set the price of the courses you sell and mark them for sale, f
 
 On **New session**, fill in:
 
+![The new session form with the searchable course list](assets/session-new.png)
+
+*The new session form. Typing in the Courses box filters the list on the title or the code of the course.*
+
 | Field | In Dolibarr | In Chamilo |
 |---|---|---|
 | **Label** (required) | The label of the service product (reference `SCH-SD-<n>`) | The title of the session |
@@ -88,6 +104,10 @@ The session exists in Dolibarr at once, and reaches Chamilo at the next synchron
 
 **School > Teachers** lists your employees (Dolibarr users flagged as employees). A teacher is an employee who also has a Chamilo account.
 
+![The Teachers page](assets/teachers.png)
+
+*The Teachers page: employees, their Chamilo account and Enable on Chamilo.*
+
 | Option | In Dolibarr | In Chamilo |
 |---|---|---|
 | **Enable on Chamilo** (needs *teacher*; the employee needs an email) | The employee becomes a teacher. | An account is created with the **teacher role and nothing else**; Chamilo emails them a link to choose a password. The username is the Dolibarr login, or with a number (`jdoe.2`) if taken. If an account with the same email exists, it is **linked as it is**, and a warning icon shows when it is not a teacher. |
@@ -100,6 +120,10 @@ Afterwards the account follows the Dolibarr user by itself: changing the name, e
 
 On **Courses**, the pencil in *Teachers*: tick the teachers and **Save**. They become the teachers of the course in Chamilo (unticking removes them from it). Needs the *teacher* right.
 
+![Choosing the teachers of a course](assets/assign-teachers.png)
+
+*Choosing the teachers of a course.*
+
 ### Choosing the coaches of a session
 
 On **Sessions**, the pencil in *Coaches*: for each course of the session, tick who coaches it in this session, and **Save**. In Chamilo they become the coaches of that course in that session. The teachers also appear on the agenda events of the dates of that course (see Schedule).
@@ -107,6 +131,10 @@ On **Sessions**, the pencil in *Coaches*: for each course of the session, tick w
 ## Students
 
 **School > Students** lists the students (a **Search** box filters by name or reference; **Synchronize now** needs *sync*). A student is not a third party: the **parents** are your customers, and a student is linked to them.
+
+![The Students page](assets/students.png)
+
+*The Students page, with its search box.*
 
 ### Creating a student
 
@@ -131,9 +159,17 @@ The account is created at the next synchronization, with the **student role**; C
 | **Enrolments** | See below | |
 | **Attendance** | Totals and latest dates read back from Chamilo | |
 
+![A student's card](assets/student-card.png)
+
+*A student's card: details, parents, enrolments and attendance.*
+
 ## Parents
 
 On the student's card, under **Parents**: pick a third party, **Add a parent**, then complete its row and **Save**. A parent may be linked to several children and a child to several parents. A third party's card has a **Children** tab listing its children.
+
+![The Children tab of a third party](assets/third-party-children.png)
+
+*The Children tab on the card of a third party lists the children that parent is linked to.*
 
 | Option | In Dolibarr | In Chamilo |
 |---|---|---|
@@ -159,6 +195,10 @@ A student is also enrolled in the sessions that their **class** follows (see Cla
 
 A **class** is the students who follow the same sessions for a teaching cycle (which need not be a school year). **School > Classes** lists them (**Show archived classes** adds the archived ones; **Synchronize now** needs *sync*). Classes need the *class* right.
 
+![The Classes page](assets/classes.png)
+
+*The Classes page.*
+
 ### Creating and editing a class
 
 **New class**, then the card:
@@ -180,6 +220,10 @@ A **class** is the students who follow the same sessions for a teaching cycle (w
 | **Remove** | The membership ends the day before; the row stays so past announcements and invoices stay traceable. The student can join again later. | The student leaves the Chamilo class and is taken out of the class's sessions |
 | **Sessions of the class**: add / remove a session | The class follows (or stops following) the session | Chamilo links the session to the class, and enrols (or unenrols) all the members |
 
+![A class card](assets/class-card.png)
+
+*A class card: details, members, sessions of the class, activities and the announcement form.*
+
 Only the **current** members are in the Chamilo class. A student without a Chamilo account yet is left out and flagged "no account yet"; they join by themselves once the account exists. Adding a student to a class that does not exist, or a session twice, is refused.
 
 ### Announcing something to all the parents
@@ -200,6 +244,10 @@ Under **Activities**: something the whole class did, invoiced on top of the sess
 
 **School > Billing** invoices what parents owe (needs the *invoice* right, the right to create invoices, and the Invoices module). Everything it creates is a **draft invoice**: you check it and validate it in Dolibarr. Nothing goes to Chamilo.
 
+![Billing: what can be invoiced](assets/billing.png)
+
+*Billing: the enrolments not invoiced yet, with the paying parents and their shares.*
+
 **Who pays**: tick **Payer** for the parents who pay on the student's card; with two payers you give each one's **share** (for example 70 % and 30 %) when invoicing, and it is remembered for that child.
 
 | Step / option | What it does |
@@ -209,11 +257,19 @@ Under **Activities**: something the whole class did, invoiced on top of the sess
 | **Recalculate** | After you change the shares, shows the new amounts. The shares of a child must add up to 100. |
 | **Create N draft invoices** | Creates the drafts and keeps the shares for next time; the result links each draft. VAT and payment terms come from Dolibarr's usual defaults (the seller company, the product, the third party). |
 
+![Billing: the review step](assets/billing-review.png)
+
+*The review step: one draft invoice per paying parent, with a line per child.*
+
 If a draft is wrong, **delete** it: what it covered is offered again. If only one of two payers' drafts is deleted, only that part is offered again. An item is never invoiced twice.
 
 ## Rooms
 
 **School > Rooms** lists the rooms. A room is a resource of Dolibarr's **Resources** module that the school uses for lessons. Needs the Resources module.
+
+![The Rooms page](assets/rooms.png)
+
+*The Rooms page: capacity and floor are edited on the row.*
 
 | Option | In Dolibarr | In Chamilo |
 |---|---|---|
@@ -228,9 +284,17 @@ If a draft is wrong, **delete** it: what it covered is offered again. If only on
 
 The dates on which a course meets. Open them from the calendar icon of a session or a course; **School > Schedule** shows the dates to come for everything, and can be limited to **one room**.
 
+![The schedule of a session](assets/schedule-session.png)
+
+*The schedule of a session: the dates with their rooms and synchronization state, and the attendance read back from Chamilo for the dates that took place (here three past dates, then dates that wait to be sent).*
+
 ### Adding dates
 
 Under **Add dates** (needs *write*):
+
+![The form that adds dates](assets/schedule-add-dates.png)
+
+*The Add dates form, below the dates of a session.*
 
 | Field | Meaning |
 |---|---|
@@ -266,6 +330,10 @@ Nothing is recorded in Dolibarr and nothing is sent back to Chamilo.
 
 **School > Synchronization log** lists everything the module sends to Chamilo, newest first: what (student, class, session, date...) with a link to it, its state, the number of attempts, the next try and the message.
 
+![The synchronization log](assets/sync-log.png)
+
+*The synchronization log: a failed job with Try again and Forget, and a job waiting for its next try.*
+
 | Option | What it does |
 |---|---|
 | Click a state (*Waiting*, *Running*, *Failed*, *Done*), or the **status** and **type** filters, then **Search** | Filters the list |
@@ -279,6 +347,10 @@ A *Waiting* job with "next try" in the future is waiting for the pause between r
 ## Reconciliation
 
 **School > Reconciliation** (needs *sync*) answers "does Chamilo still say what Dolibarr says?". Tick the **areas** (courses, sessions, students, teachers, enrolments, classes, rooms, dates to come) and press **Run the check**. It changes nothing.
+
+![The reconciliation report](assets/reconciliation.png)
+
+*A reconciliation report for two areas. Here the demo accounts and session do not exist in Chamilo, so each is reported as missing; a real difference that sending again can fix comes with a ticked box and the button Send the ticked ones again.*
 
 Each difference is *Missing in Chamilo* (an account, session, class, room or date that is gone, or not there yet), *Different* (a name, an active state, a member, a date that moved), *Only in Chamilo* (something Chamilo has that Dolibarr does not expect, such as a course not imported yet) or *Could not be checked*. Differences that sending again would fix are **ticked**: press **Send the ticked ones again** to queue them (you land on the synchronization log). What was **deleted in Chamilo** is only reported: the module never recreates it by itself, so you decide. A big school is checked area by area (at most 300 objects per area).
 
