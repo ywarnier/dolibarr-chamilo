@@ -296,7 +296,11 @@ abstract class SchoolMcpTool extends McpTool
 	{
 		$rows = array();
 		$q = $this->db->query($sql);
-		while ($q && ($o = $this->db->fetch_object($q))) {
+		if (!$q) {
+			// A broken query must not look like "no row": the handler logs the exception and answers with an internal error.
+			throw new RuntimeException('School MCP tool query failed: '.$this->db->lasterror());
+		}
+		while ($o = $this->db->fetch_object($q)) {
 			$rows[] = $o;
 		}
 		return $rows;

@@ -101,9 +101,9 @@ class SchoolCatalogTool extends SchoolMcpTool
 	{
 		$P = MAIN_DB_PREFIX;
 		$rows = array();
-		foreach ($this->rows("SELECT c.rowid, c.chamilo_id, c.code, c.language, c.sync_status, c.last_error, p.ref, p.label, p.price, p.duration_value, p.duration_unit FROM {$P}school_course AS c LEFT JOIN {$P}product AS p ON p.rowid = c.fk_product WHERE c.entity = ".$this->entity()." ORDER BY p.label LIMIT ".$this->limit($args)) as $o) {
+		foreach ($this->rows("SELECT c.rowid, c.chamilo_id, c.code, c.language, c.sync_status, c.last_error, p.ref, p.label, p.price, p.duration FROM {$P}school_course AS c LEFT JOIN {$P}product AS p ON p.rowid = c.fk_product WHERE c.entity = ".$this->entity()." ORDER BY p.label LIMIT ".$this->limit($args)) as $o) {
 			$rows[] = array('id' => (int) $o->rowid, 'label' => (string) $o->label, 'ref' => (string) $o->ref, 'code' => (string) $o->code, 'chamilo_id' => $o->chamilo_id !== null ? (int) $o->chamilo_id : null,
-				'language' => (string) $o->language, 'price' => $o->price !== null ? (float) $o->price : null, 'duration' => $o->duration_value ? (string) $o->duration_value.' '.(string) $o->duration_unit : null,
+				'language' => (string) $o->language, 'price' => $o->price !== null ? (float) $o->price : null, 'duration' => $o->duration !== null && $o->duration !== '' ? (string) $o->duration : null,
 				'sync_status' => (int) $o->sync_status, 'last_error' => $o->last_error);
 		}
 		return $rows;
