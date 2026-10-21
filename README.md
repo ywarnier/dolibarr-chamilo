@@ -44,8 +44,9 @@ Every object that exists on both sides is linked by an id on each side: the Cham
 ## Documentation
 
 - [INSTALL.md](INSTALL.md): requirements and installation.
-- [doc/ADMIN_GUIDE.md](doc/ADMIN_GUIDE.md): configuration, rights, the sync queue, troubleshooting.
-- [doc/USER_GUIDE.md](doc/USER_GUIDE.md): day-to-day use for school staff.
+- [doc/ADMIN_GUIDE.md](doc/ADMIN_GUIDE.md): configuration, rights by screen, the sync queue, MCP set-up, troubleshooting.
+- [doc/USER_GUIDE.md](doc/USER_GUIDE.md): day-to-day use for school staff, every option with its effect in Dolibarr and in Chamilo, and how to use the module through an AI assistant.
+- [doc/MCP.md](doc/MCP.md): the reference of the 43 MCP tools. Setting the server up is in the administrator guide, using it in the user guide.
 
 ## Chamilo side
 

@@ -357,3 +357,5 @@ SchoolReconcileQueue=Send the ticked ones again
 SchoolReconcileQueueHelp=They are queued, then sent at the next synchronization.
 SchoolReconcileQueued=%s job(s) queued.
 SchoolInvoiceModuleOff=The Invoices module must be enabled to create invoices.
+SchoolSearchCourses=Type a title or a code to find a course
+SchoolSearchCoursesHelp=Type part of the title or of the code to filter the list, click a course to add it, and click its cross to remove it.

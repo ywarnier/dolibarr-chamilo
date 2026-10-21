@@ -9,6 +9,7 @@
 | Database | MySQL or MariaDB. The schema uses MySQL syntax; PostgreSQL is not supported. |
 | Dolibarr modules | Third parties, Products, Services, Agenda (they are enabled with the module if they are off). The Invoices module is enabled with it, because billing needs it. The Emailing module is needed to send announcements to parents, and is not enabled for you. |
 | Chamilo | A recent `master` (see "Chamilo side" below) |
+| For the AI assistant (optional) | Dolibarr's AI module with its MCP server; see "MCP tools" in [doc/ADMIN_GUIDE.md](doc/ADMIN_GUIDE.md) |
 
 ## 1. Put the module in Dolibarr
 
@@ -85,6 +86,10 @@ Enabling the module declares the job **SchoolSyncQueue**, every 5 minutes. Dolib
 ```
 
 The security key is in **Setup > Scheduled jobs**. Without it, nothing is lost: pending changes wait in the queue, and **Synchronize now** (on the Sessions page) sends them by hand.
+
+## 7. Rights and, optionally, the MCP server
+
+Give the users the School rights they need (**Home > Setup > Users and groups**): the guide lists them by screen and gives suggested sets ([doc/ADMIN_GUIDE.md](doc/ADMIN_GUIDE.md), "Rights"). To let an AI assistant use the module, follow "MCP tools" in the same guide: enable the AI module and its MCP server, choose the user the assistant acts as, give that user only the rights it needs, and disable then enable the School module once so that its tools are registered.
 
 ## Upgrading
 

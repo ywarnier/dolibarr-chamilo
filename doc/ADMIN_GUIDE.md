@@ -1,6 +1,8 @@
 # Administrator guide
 
-For the person who installs and configures the School module. Installation steps are in [INSTALL.md](../INSTALL.md); this guide explains what is configured, what the module does behind the scenes, and what to check when something goes wrong.
+For the person who installs and configures the School module. Installation steps are in [INSTALL.md](../INSTALL.md); this guide explains what is configured, which rights each person needs, what the module does behind the scenes, how to connect an AI assistant (MCP), and what to check when something goes wrong. What staff see and do is in [USER_GUIDE.md](USER_GUIDE.md); the list of MCP tools is in [MCP.md](MCP.md).
+
+Contents: [Settings](#settings) · [Rights](#rights) · [The Chamilo service account](#the-chamilo-service-account) · [The synchronization queue](#the-synchronization-queue) · [What is created in Chamilo](#what-is-created-in-chamilo) · [Data model](#data-model) · [Billing](#billing) · [MCP tools](#mcp-tools) · [Reconciliation](#reconciliation) · [Rooms and schedule](#rooms-and-schedule) · [Announcements to parents](#announcements-to-parents) · [Security notes](#security-notes) · [Troubleshooting](#troubleshooting)
 
 ## Settings
 
@@ -15,26 +17,69 @@ Everything is on **Home > Setup > Modules/Applications > School (wrench icon)**.
 | Send the new-account message | `SCHOOL_TEACHER_SEND_EMAIL` | On unless set to `0`. When on, Chamilo emails a newly created teacher a link to choose a password. Set it with **Home > Setup > Other setup**, or in the `llx_const` table. |
 | Student email | `SCHOOL_STUDENT_EMAIL_DOMAIN` | Domain of the placeholder address (`username@domain`) given to a student who has no email and no parent with one. Leave it empty to refuse such students instead. It does not need to receive mail unless you want it to. |
 | Send the new-account message to students and parents | `SCHOOL_STUDENT_SEND_EMAIL`, `SCHOOL_PARENT_SEND_EMAIL` | On unless set to `0`. A student's message goes to the address of the account, which is normally a parent's mailbox. |
+| Chamilo branch for the rooms | `SCHOOL_CHAMILO_BRANCH_ID` | Chosen on the setup page from the branches of Chamilo. A Chamilo room belongs to a branch. *Automatic* (0) picks the only branch and fails with a clear message when Chamilo has several. |
+| Title of the attendance sheets | `SCHOOL_ATTENDANCE_TITLE` | Title (default `Attendance`) of the attendance the module creates in Chamilo for each course of a session, or for a course on its own. Not on the setup page: set it in **Home > Setup > Other setup**. Changing it does not rename sheets that exist. |
+| Days the synchronization log keeps done jobs | `SCHOOL_LOG_KEEP_DAYS` | 30 by default; 0 keeps every job. The scheduled job deletes the done jobs older than this. Failed and waiting jobs are never purged. Set it in **Other setup**. |
 | Chamilo portal id | `SCHOOL_CHAMILO_ACCESS_URL_ID` | Optional. Without it the module finds the portal whose address has the same host and port as the configured URL. Set it if that detection cannot work, for example behind a proxy that changes the host. |
 
-The three buttons of **Prepare Chamilo** can be pressed again at any time; none of them duplicates anything.
+The buttons of **Prepare Chamilo** (test the connection, create the extra fields, send the Dolibarr ids) can be pressed again at any time; none of them duplicates anything.
+
+Settings that are not on the setup page are plain Dolibarr constants: **Home > Setup > Other setup** lists and edits them (administrators only), and a constant that is absent has the default given above.
 
 ## Rights
 
-Assign them in **Home > Setup > Users and groups**.
+Assign them in **Home > Setup > Users and groups** (a user or a group, tab *Permissions*). Dolibarr administrators hold every right. The menu entries show only what the user can read.
+
+### The module's rights
 
 | Right | Allows |
 |---|---|
-| Read school data (`read`) | See the School menu, the course and session lists |
-| Create and update school data (`write`) | Create sessions |
-| Delete school data (`delete`) | Reserved for the delete features |
-| Run and inspect the Chamilo synchronization (`sync`) | Import from Chamilo, **Synchronize now** |
-| Configure the Chamilo connection (`setup`) | The setup page and its buttons |
-| Manage teachers and their Chamilo accounts (`teacher`) | Enable a Dolibarr employee as a teacher (this creates or links a Chamilo account), choose the teachers of courses and the coaches of sessions. Kept apart from `write` so that not everyone who can edit school data can create Chamilo accounts for staff. |
-| Manage classes, announcements and class activities (`class`) | Create and edit classes, members and sessions, prepare announcements, create and delete the activities of a class |
-| Invoice enrolments and class activities to the parents (`invoice`) | Use **School > Billing**. Dolibarr's own right to create invoices is required as well. |
+| Read school data (`read`) | See the School menu, the home page, the lists (courses, sessions, students, classes, teachers, rooms, schedule, synchronization log) and the cards, the **Children** tab of a third party, and read with the MCP tools. Nothing can be changed with this right alone. |
+| Create and update school data (`write`) | Create sessions; create and edit students, their parents, their enrolments; adopt and edit rooms; add, change and cancel dates of the schedule |
+| Delete school data (`delete`) | Reserved: no screen or tool needs it today (removals are covered by the right of the thing removed) |
+| Run and inspect the Chamilo synchronization (`sync`) | **Import from Chamilo**, **Synchronize now** (also from the rooms, schedule, students, classes, teachers and log pages), **Import the rooms of Chamilo**, the **Synchronization log** actions (try again, forget), and the **Reconciliation** report and its fixes |
+| Configure the Chamilo connection (`setup`) | The setup page and its buttons (connection, extra fields, branch, Dolibarr ids) |
+| Manage teachers and their Chamilo accounts (`teacher`) | Enable a Dolibarr employee as a teacher (this creates or links a Chamilo account), **Send again**, and choose the teachers of courses and the coaches of sessions. Kept apart from `write` so that not everyone who can edit school data can create Chamilo accounts for staff. |
+| Manage classes, announcements and class activities (`class`) | Create and edit classes, their members and sessions, prepare the announcement to the parents, create and delete the activities of a class, **Send again** a class |
+| Invoice enrolments and class activities to the parents (`invoice`) | Use **School > Billing** and the **Invoice** link of an activity |
 
-Dolibarr administrators hold every right.
+### Rights of other modules that the module also needs
+
+| Right | Needed for |
+|---|---|
+| Invoices: *Create and update invoices* (`facture/creer`) | **School > Billing**, and the MCP tool that creates invoices. Together with the School `invoice` right and the Invoices module. |
+| Emailing: *Create and update emailings* (`mailing/creer`) | Preparing the announcement to the parents. The Emailing module must be enabled: until it is, its rights do not exist in Dolibarr and nobody can be given them. Sending the campaign needs the Emailing rights too. |
+| Resources and Agenda | None for the module's screens: the room and the dates are created by the module itself. Users who open Dolibarr's own resource pages (the planning link of a room) need the Resources rights as usual. |
+| AI (module) | Not a right of the module, but the MCP server and the AI assistant need the AI module enabled (see "MCP tools"). |
+
+### Which right for which screen
+
+| Screen | See it | Change something |
+|---|---|---|
+| Home, lists, cards, schedule, rooms | `read` | see below |
+| Courses: **Import from Chamilo** | `read` | `sync` |
+| Sessions: **New session** | `read` | `write` |
+| Courses and sessions: choose teachers or coaches | | `teacher` |
+| Teachers: **Enable on Chamilo**, **Send again** | `read` | `teacher` (and `sync` for **Synchronize now**) |
+| Students and their cards: create, edit, parents, enrol | `read` | `write` |
+| Classes: **New class**, card, members, sessions, announcement, activities | `read` | `class` |
+| Billing | `invoice` + `facture/creer` | the same |
+| Rooms: adopt, edit capacity and floor | `read` | `write`; **Import the rooms of Chamilo** needs `sync` |
+| Schedule: add, change, cancel dates | `read` | `write` |
+| Synchronization log, **Synchronize now** | `read` | `sync` |
+| Reconciliation | `sync` | `sync` |
+| Setup page | `setup` | `setup` |
+
+### Suggested sets
+
+| Person | Rights |
+|---|---|
+| Secretary | `read`, `write` |
+| Person who manages staff and classes | + `teacher`, `class` |
+| Accountant | `read`, `invoice`, and Invoices *create* |
+| Person who looks after the synchronization | `read`, `sync` |
+| Administrator of the connection | `setup` (and `sync` to test it) |
+| An AI assistant (MCP user) | See "MCP tools": only the rights of what you want it to do |
 
 ## The Chamilo service account
 
@@ -55,7 +100,7 @@ Each change that has to reach Chamilo is a job in `llx_school_syncqueue`:
 
 The School home page shows the number of jobs per status.
 
-- **When it runs.** The scheduled job `SchoolSyncQueue` runs every 5 minutes if Dolibarr's scheduler is triggered (see INSTALL.md). **Synchronize now** on the Sessions page runs it immediately. Each run sends up to 50 jobs.
+- **When it runs.** The scheduled job `SchoolSyncQueue` runs every 5 minutes if Dolibarr's scheduler is triggered (see INSTALL.md). **Synchronize now** (on the sessions, students, classes, teachers, rooms, schedule and log pages) runs it immediately. Each run first deletes the done jobs older than `SCHOOL_LOG_KEEP_DAYS`, then sends up to 50 jobs, then reads back the attendance of up to 20 dates (see "Rooms and schedule").
 - **Retries.** A job that fails because Chamilo cannot be reached, times out, rate-limits (429) or answers with a server error is retried after 1 minute, then 2, 4, 8, and so on, never more than 1 hour apart, up to 8 attempts. After that it becomes Failed.
 - **No retry.** Any other error, such as a validation error (422), a refused permission (403) or a missing object (404), would fail again, so the job becomes Failed at once with Chamilo's message.
 - **No duplicates.** Two identical waiting jobs are merged. A session's Chamilo id is saved as soon as Chamilo has created it, so a retry after a partial failure carries on instead of creating a second session.
@@ -72,6 +117,8 @@ The School home page shows the number of jobs per status.
 - **Teacher accounts**, created with the teacher role (status 1).
 - On every account the `dolibarr_id` extra field holds a typed reference to Dolibarr: `user:<id>` for a teacher, `student:<id>` for a student, `contact:<id>` for a parent. They are three different tables, so a bare number would be ambiguous. The module never changes the role of an account: an account that already exists is linked as it is, and the teacher list shows a warning icon when that account is not a teacher. Nobody can become an administrator through the synchronization.
 - Teachers and coaches of courses and sessions, using Chamilo's own course user actions.
+- **Rooms** (`/api/rooms`), with the title of the Dolibarr resource, its capacity and floor, in the branch chosen on the setup page.
+- **Attendance sheets**: one per course of a session (or per course on its own), created with the title `SCHOOL_ATTENDANCE_TITLE` and a marker in its description so that the module finds it again. Each date of the schedule is a date of that sheet, with its start, duration and room. The module only creates, moves and removes the dates; the presences are recorded by the teachers in Chamilo and read back by the module.
 - **Classes**, as Chamilo classes (user groups of the "normal class" type), through `/api/usergroups`. Each push replaces the whole list of members and of sessions, which is how Chamilo's class routes work. Chamilo enrols the members of a class in the sessions linked to it and takes a student out of them when they leave, so a student who is also enrolled on their own in one of those sessions is taken out of it too when leaving the class. A class is never deleted in Chamilo by this module: archiving a class in Dolibarr leaves it as it is.
 - Enrolments: a student is added to or removed from a course with Chamilo's course user actions, and from a session with `/api/sessions/{id}/students`, which subscribes the student to every course of the session and keeps the other students. Chamilo is read first each time, and nothing is removed that Dolibarr did not name.
 - Accounts that already exist are linked, not changed: by email for a teacher, a parent, and a student who has an own email. An account found by email is never given a role, and a warning icon shows when it does not have the expected one. An email that belongs to a deleted account is refused.
@@ -90,7 +137,12 @@ Created by the module and kept when it is disabled:
 | `llx_school_enrolment` | Individual enrolments of a student in a course or session |
 | `llx_school_class`, `llx_school_class_student`, `llx_school_class_session` | Classes, their members and the sessions they follow |
 | `llx_school_class_activity`, `llx_school_class_activity_invoice` | Extra activities of a class and what was invoiced to which parent |
-| `llx_school_syncqueue` | The synchronization queue |
+| `llx_school_guardian` | The Chamilo account of a parent who follows children (one per contact) |
+| `llx_school_enrolment_invoice` | What was invoiced for each enrolment, to which third party and in which share |
+| `llx_school_room` | The resources used as rooms: floor and Chamilo room id (the capacity is the resource's `max_users`) |
+| `llx_school_occurrence`, `llx_school_attendance` | The dates of the schedule (linked to an agenda event and a room) and the Chamilo attendance sheet of each course and session |
+| `llx_school_presence` | The presences read back from Chamilo, by date and student |
+| `llx_school_syncqueue` | The synchronization queue and its log |
 
 Teachers are Dolibarr users flagged as employees (**Home > Users and groups**): there is no separate teacher record to maintain.
 
@@ -114,7 +166,85 @@ The activities of a class are kept in `llx_school_class_activity` and what was i
 
 ## MCP tools
 
-The module registers 43 tools in Dolibarr's MCP server, so that an AI assistant can do what the screens do. Enable the AI module and its MCP server, give the MCP user the School rights, and disable then enable the School module once so that its hook is registered. Each tool, the right it needs and the rules they follow are in `doc/MCP.md`. Writes that change Chamilo are queued like those of the screens; announcements and invoices are only drafts.
+The module adds 43 tools to Dolibarr's MCP server, so that an AI assistant (an MCP client such as Claude, or Dolibarr's own AI assistant) can do what the screens do, with the same rules. The tools are listed in [MCP.md](MCP.md), and [USER_GUIDE.md](USER_GUIDE.md) shows how to use them. This section is about setting them up.
+
+### What you need
+
+| | |
+|---|---|
+| Dolibarr | 24.0 or later with the **AI** module enabled (**Home > Setup > Modules/Applications**, *AI*). The MCP server and the AI assistant both use the module's tools. |
+| The School module | Enabled, and enabled again once after an update that adds tools (see "Registering the tools"). |
+| A Dolibarr user for the assistant | See "Enable the server and choose who the assistant acts as". |
+| The rights of that user | See "Rights of the assistant". |
+| For some tools | The Invoices module and its create right (invoices), the Emailing module and its create right (announcements), the Resources module (rooms and dates), a configured Chamilo connection (everything that talks to Chamilo). |
+
+### Enable the server and choose who the assistant acts as
+
+1. Open the setup of the AI module (**Home > Setup > Modules/Applications > AI**, wrench icon) and its **MCP Server** page. Turn **Enable MCP Server** on. The page shows the address of the server, `https://<your Dolibarr>/ai/server/mcp_server.php`, which you give to the MCP client.
+2. Decide how the client identifies itself. Dolibarr accepts two credentials, sent as `Authorization: Bearer <key>`, `DOLAPIKEY: <key>` or `X-API-Key: <key>`:
+   - **A user's own API key** (the key on the Dolibarr user card, the one the REST API uses). The assistant then acts as that user, with that user's rights, and the AI log names who called. This is the best choice when each person uses their own assistant.
+   - **The shared server key** of the MCP Server page, with a **service user** chosen on the same page. Every call runs as that user. Create a dedicated user for it (Dolibarr recommends it) and give it only the rights it needs; name it so that the log is clear (for example `aibot`).
+3. Dolibarr's AI assistant (the chat) uses the same tools and acts as the user who is logged in.
+
+An administrator user can do everything: never use one for an assistant.
+
+### Rights of the assistant
+
+Every tool checks the rights it declares, from inside the tool, whatever the version of Dolibarr (24.0 checks none before calling a tool). A tool called without its right answers `Permission denied: the right school/<right> is required`. Give the assistant's user the module's rights (see "Rights") for what you want it to do:
+
+| To let it... | Give it |
+|---|---|
+| Read the lists, cards, schedule, attendance and the synchronization log | `read` |
+| Read the billable items | `invoice` |
+| Create sessions, students, parents and enrolments; manage rooms and dates | `write` |
+| Enable teachers, choose teachers and coaches | `teacher` |
+| Manage classes and activities, and prepare announcements | `class` (+ Emailing *create* for the announcement) |
+| Create draft invoices | `invoice` + Invoices *create* |
+| Import from Chamilo, run the synchronization, retry or forget jobs, check and fix with the reconciliation | `sync` |
+
+No tool needs `setup` or `delete`: do not give them.
+
+If the Emailing module is off, its right does not exist and the announcement tool answers that `mailing/creer` is required: enable the module first, then give the right.
+
+### Which tools the assistant may use
+
+**Setup > AI > tool access** (the page that lists the discovered tools, with the presets *View only*, *Modify* and *All tools*, for the MCP server and for the chat assistant) restricts the tools. Two things to know:
+
+- Dolibarr labels a tool **Modify** when its name starts with `create`, `update`, `delete`, `add`, `remove`, `change`, `write`, `edit`, `validate`, `pay` or `send`, and lets the *View only* preset allow every other name. The School tools respect this: every tool that writes starts with one of these verbs, and a tool that only reads does not (`test/cli/mcp_tools_check.php` checks it).
+- Until someone saves the list on that page, **all tools are allowed**. Once it is saved, the list is explicit (`AI_MCP_SERVER_ALLOWED_TOOLS`, or `AI_ASSISTANT_ALLOWED_TOOLS` for the chat): tools that appear later, for example after a School update, are **not** allowed until you tick them. A School tool that "does not exist" or "is not available in this tool context" for the assistant is almost always that.
+
+### Registering the tools
+
+Dolibarr reads the hooks of a module when it is enabled. After installing or updating the School module, disable and enable it once (**Home > Setup > Modules/Applications**), so that the hook that registers the tools (`addMcpTools`, context `aimcp`) is known. Nothing is lost by this: tables and data are kept. The tools must then appear in the tool access page.
+
+### What the assistant can and cannot do
+
+- **Writes are confirmed.** On Dolibarr 25 a tool that writes does not run at the first call: the client gets a sentence such as "Create the student Ana Doe." and has to confirm. On Dolibarr 24.0 there is no such step: grant the rights with that in mind.
+- **Same rules as the screens.** The tools call the same classes: a share that does not add up to 100, a busy room, a date whose attendance was taken, a deleted Chamilo account, a missing price, all are refused or reported exactly as on the screens.
+- **Chamilo changes are queued**, not instant, and appear in the synchronization log. `send_school_changes_to_chamilo` runs the queue at once.
+- **Drafts only.** Invoices are created as drafts, never validated; the announcement is a draft campaign, never sent.
+- **Nothing is deleted in Chamilo**, no role is changed, and nobody can be made an administrator.
+- **Language.** Errors come back in the language of the user the assistant acts as; the details of the reconciliation are in English.
+- **Size.** A list returns 200 rows at most; the reconciliation looks at 300 objects per area and asks Chamilo once per object, so ask for one area at a time on a large school.
+
+### Checking the setup
+
+1. As the assistant's user, ask for the synchronization status (`get_school_sync_status`): it answers whether the connection is configured and how many jobs wait.
+2. On the server, run `php test/cli/mcp_tools_check.php /path/to/dolibarr/htdocs` (`DOLIBARR_HOST` sets the host name). It checks that the 43 tools are registered by that Dolibarr, declare rights and have the right names, that each answers without arguments with its own error, and that a user without rights is refused by all of them. It does not call Chamilo and changes nothing. Run it against every Dolibarr you support: it was run on 25.0.0-alpha and on a snapshot of the code just before the per-tool rights were added to the server (the closest thing to 24.0.0 that was available), not on a release of 24.0.
+3. The AI module keeps a log of the requests: it shows the tool, the arguments and who called.
+
+### Troubleshooting the assistant
+
+| Message or symptom | Meaning |
+|---|---|
+| No School tool is listed | The School module was not disabled and enabled since the tools were added; or the AI module or the MCP server is off; or the tool access page was saved before and does not list the School tools |
+| "Tool ... is not available in this tool context" | The tool is not ticked in the tool access page |
+| "Permission denied: the right school/x is required" | The assistant's user lacks that right (see the table above) |
+| "Permission denied: the right facture/creer is required" or "mailing/creer" | The Invoices or Emailing right is missing; for Emailing, the module is probably off |
+| The assistant gets `input_required` and nothing happens | Dolibarr 25 asks for a confirmation of a write: the client must confirm, or the person must answer yes |
+| "An internal error occurred while executing the tool" | An exception; the real message is in Dolibarr's log (`documents/dolibarr.log`, search for `McpHandler`) |
+| "Nothing was invoiced: ..." | A student has no paying parent, no price, or shares that do not add up to 100: the message names the child |
+| A tool answers that Chamilo is not configured | The connection is not set up on the School setup page |
 
 ## Reconciliation
 
@@ -158,7 +288,9 @@ The same selector, **Parents of the students of a class**, is also offered when 
 - Every form carries Dolibarr's CSRF token; requests without it are refused.
 - Redirects from Chamilo are not followed, so the key cannot be sent to another host.
 - Private and loopback addresses are refused unless **Allow a local address** is on.
-- Rights are checked on every page and every action.
+- Rights are checked on every page and every action, and by every MCP tool itself.
+- An MCP client acts with the rights of its Dolibarr user: use a dedicated user with only the rights it needs, never an administrator. Writes need no confirmation on Dolibarr 24.0.
+- No tool deletes in Chamilo, validates an invoice, sends an e-mail, or changes a Chamilo role.
 
 ## Troubleshooting
 
@@ -186,4 +318,12 @@ Start with the connection test on the setup page, then the School home page (que
 | "All the usernames tried are taken" | The login and its numbered variants (`jdoe`, `jdoe.2`... up to 5) already exist in Chamilo. Change the Dolibarr login or create the Chamilo account by hand with the teacher's email, then use **Send again**: an account with the same email is linked. |
 | "The Chamilo account no longer exists" | The account was deleted in Chamilo. The module does not create it again by itself, so that a deletion is not silently undone: remove the teacher's link or recreate the account. |
 | A teacher is linked but shown with a warning | The existing Chamilo account found by email is not a teacher. The module does not change roles: change it in Chamilo if that is wanted. |
+| A room shows an error: "Chamilo has several branches: choose the one for the rooms in the module setup" | Choose the branch on the setup page (**Chamilo branch for the rooms**) |
+| A date stays *Waiting* with a message about the session, course or attendance | The session or course is not in Chamilo yet: the job is retried by itself. Check that it was created and synchronized. |
+| A date shows "The attendance was already taken for this date in Chamilo: it was not moved there" | Chamilo says the attendance of that date is done, so the module does not move or remove it there (the room alone can change). Correct it in Chamilo, or leave it. |
+| The attendance of past dates never appears | The module reads it from `GET /api/c_attendance_calendars/{id}/sheet` (see INSTALL.md, Chamilo side), at the end of each synchronization; the date must have taken place and be synchronized. Run **Synchronize now** and read the log. |
+| "The room is already booked at that time" | Another date, or any booking of that resource in the Resources module, overlaps (a lesson may start when another ends) |
+| The Rooms or Schedule menu is missing | The Resources module is off, or the user lacks the `read` right |
+| The reconciliation says a session "could not be checked" | The session is not on the portal this module talks to (another access URL), or Chamilo could not be reached |
+| A job is stuck in *Running* | A run crashed: it goes back to *Waiting* by itself after 15 minutes |
 | After re-enabling the module, the menu is missing | Log out and in again, and open the module from the top menu |

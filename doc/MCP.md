@@ -4,9 +4,7 @@ The School module adds its tools to Dolibarr's MCP server (the hook `addMcpTools
 
 ## Set up
 
-1. Enable Dolibarr's **AI** module and its MCP server, and give the MCP user the School rights it needs (see the right of each tool below). Rights are checked for every call, and each tool also checks its own, because Dolibarr 24.0 does not check them before calling a tool.
-2. If you restrict the tools the MCP server may use (`AI_MCP_SERVER_ALLOWED_TOOLS`), allow the `*_school_*` tools you want.
-3. Disable and enable the School module once after an update that adds tools: Dolibarr reads the hooks of a module when it is enabled.
+Setting the MCP server up (modules, the user the assistant acts as, its rights, the tool access page, registering the tools, checks and troubleshooting) is in the [administrator guide](ADMIN_GUIDE.md#mcp-tools). Using the tools, with examples, is in the [user guide](USER_GUIDE.md#using-an-assistant-mcp). This page is the reference of the tools.
 
 ## Rules the tools follow
 

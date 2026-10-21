@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 require_once __DIR__.'/lib/school_bootstrap.inc.php';
 require_once __DIR__.'/class/schoolsessionsync.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/html.form.class.php';
 
 /**
  * @var Conf $conf
@@ -85,13 +86,16 @@ print '<tr><td class="fieldrequired">'.$langs->trans('SchoolDisplayEnd').'</td><
 print '<tr><td>'.$langs->trans('SchoolPriceHT').'</td><td><input type="text" class="width100" name="price" value="'.dol_escape_htmltag((string) GETPOST('price', 'alphanohtml')).'"> <span class="opacitymedium">'.$langs->trans('SchoolPriceHelp').'</span></td></tr>';
 print '<tr><td class="tdtop">'.$langs->trans('SchoolCourses').'</td><td>';
 $resql = $db->query("SELECT c.rowid, c.code, c.language, p.label FROM ".MAIN_DB_PREFIX."school_course AS c INNER JOIN ".MAIN_DB_PREFIX."product AS p ON p.rowid = c.fk_product WHERE c.entity = ".((int) $conf->entity)." AND c.chamilo_id IS NOT NULL ORDER BY p.label");
-$nb = 0;
+// One searchable list instead of a checkbox per course: typing filters on what is written in the option, the title and the code.
+$options = array();
 while ($resql && ($o = $db->fetch_object($resql))) {
-	$nb++;
-	print '<label><input type="checkbox" name="course_ids[]" value="'.((int) $o->rowid).'"'.(in_array((int) $o->rowid, $courseIds, true) ? ' checked' : '').'> '.dol_escape_htmltag($o->label).' <span class="opacitymedium">'.dol_escape_htmltag($o->code.($o->language ? ' · '.$o->language : '')).'</span></label><br>';
+	$options[(int) $o->rowid] = $o->label.' ('.$o->code.($o->language ? ' · '.$o->language : '').')';
 }
-if ($nb === 0) {
+if (!$options) {
 	print '<span class="opacitymedium">'.$langs->trans('SchoolNoCourseToLink').'</span>';
+} else {
+	print Form::multiselectarray('course_ids', $options, $courseIds, 0, 0, 'minwidth500 maxwidth100p', 0, 0, '', '', $langs->trans('SchoolSearchCourses'));
+	print '<br><span class="opacitymedium">'.$langs->trans('SchoolSearchCoursesHelp').'</span>';
 }
 print '</td></tr></table>';
 print '<div class="center"><input type="submit" class="button button-save" value="'.dol_escape_htmltag($langs->trans('Create')).'"> ';
