@@ -5,6 +5,33 @@ All notable changes of the School module. The format follows [Keep a Changelog](
 ## Unreleased
 
 ### Added
+- Translations of the module into 72 locales (the 64 languages of Dolibarr that the CRM module also covers, plus the Arabic, Bengali, Greek and Chinese variants as copies of their main language). They are **machine translations of en_US that no native speaker has reviewed**; `en_US` and `fr_FR` are the ones written by hand. A locale without a directory falls back to its main language. The terms of the Dolibarr core were followed where the core is translated (and English words kept where it is not), and the translators flagged the choices that deserve a native review (for example "coach", "session", "parent", the name of the Emailing module).
+- `test/cli/lang_check.php`: compares every language file with `en_US` (keys, `%s` placeholders, empty values, duplicates, a stray `%` that would break `sprintf`) and checks that every key used by the code exists.
+
+### Changed
+- The rules that were inside three pages now live in classes, so that the pages and the MCP tools share them: `SchoolTeacherSync::assign()` (teachers of a course or coaches of a session), `SchoolClass::prepareAnnouncement()` (the draft campaign for the parents of a class), `SchoolBilling::invoice()` (plan, keep the shares, create the draft invoices) and `SchoolReconcile::queueFixes()`. Adding a student or a session to a class that does not exist is now refused.
+- `llx_school_enrolment` no longer has `fk_commande` and `fk_facture`: an enrolment can give several invoices (one per paying parent), which `llx_school_enrolment_invoice` records. A database created with an earlier build can be updated by hand: `ALTER TABLE llx_school_enrolment DROP COLUMN fk_commande, DROP COLUMN fk_facture;`. Enabling the module again creates the new table.
+- When a student's Chamilo account is created, the classes the student is a member of are updated.
+- A student's enrolment in a session that is not on the Chamilo portal this module talks to now says so, instead of asking to update Chamilo.
+- An email that belongs to a deleted Chamilo account is no longer linked: the account is unusable and keeps its email, so the module reports it instead of linking a dead account.
+- The value of `dolibarr_id` written for teachers is now `user:<id>`. A database that already holds plain ids from an earlier build is corrected by sending the teachers again from the teacher list.
+- `llx_school_course_teacher` and `llx_school_session_teacher` have a `sync_status` column (0 to add in Chamilo, 1 in Chamilo, 3 to remove) instead of `chamilo_link_id`. A database created with an earlier build can be updated by hand:
+
+  ```sql
+  ALTER TABLE llx_school_course_teacher DROP COLUMN chamilo_link_id, ADD COLUMN sync_status smallint DEFAULT 0 NOT NULL;
+  ALTER TABLE llx_school_session_teacher DROP COLUMN chamilo_link_id, ADD COLUMN sync_status smallint DEFAULT 0 NOT NULL;
+  ```
+
+  Run "Create the extra fields" again on the setup page to create the new `dolibarr_id` field of Chamilo users. Enabling the module again creates the new `llx_school_guardian` table; the statuses of `llx_school_enrolment.status` (0 to enrol, 1 enrolled, 3 to remove) and of `llx_school_student_parent.chamilo_follow` (0, 1, 2 to stop) are documented in `sql/llx_school.sql`.
+- Minimum Dolibarr version is now 24.0. The module is meant to be driven through Dolibarr's MCP server as well as through its screens.
+- `llx_school_enrolment.fk_class` is removed. Chamilo enrols the members of a class itself when the class is linked to a session, so Dolibarr keeps no class-derived enrolments. A database created with an earlier build can drop the column by hand:
+
+  ```sql
+  ALTER TABLE llx_school_enrolment DROP COLUMN fk_class;
+  ```
+
+### Fixed
+- The rights of the module carry their English text in the descriptor instead of keys that did not exist; a duplicate key of the language files is removed; the pages load the Dolibarr language files whose words they reuse, so the status of a draft invoice is no longer shown as `BillShortStatusDraft`.
 - Screenshots in the user and administrator guides (`doc/assets/`): every screen of the module, the form with the course search, the setup page, the rights of an assistant and the MCP server and tool access pages. They show fictional demo data, and no key or token.
 - The courses of the new-session form are chosen in a searchable list (a multiple select with a search box that filters on the title and on the code of the course, with the code and language shown) instead of one checkbox per course, so the form stays usable with hundreds of courses. The selection is kept when the form is shown again after an error.
 - Documentation: the administrator guide now has the rights of each screen and of the MCP tools, the rights of other modules (Invoices, Emailing), all the settings, the full data model, and a complete MCP set-up chapter (modules needed, the two ways to authenticate, the rights of the assistant, the tool access page and its allow-list trap, registering the tools, checks, troubleshooting); the user guide describes every screen option, what it does in Dolibarr and in Chamilo, and how to use the module through an MCP assistant.
@@ -43,30 +70,6 @@ All notable changes of the School module. The format follows [Keep a Changelog](
 - Settings `SCHOOL_TEACHER_SEND_EMAIL` (default on: Chamilo sends the new teacher its "choose your password" message) and `SCHOOL_CHAMILO_ACCESS_URL_ID` (the portal id, found from the URL when not set).
 - "Prepare Chamilo" block on the setup page: connection test, creation of the Chamilo extra fields, and sending of the Dolibarr ids to Chamilo, so none of these needs a script.
 - README, INSTALL, administrator guide and user guide.
-
-### Changed
-- The rules that were inside three pages now live in classes, so that the pages and the MCP tools share them: `SchoolTeacherSync::assign()` (teachers of a course or coaches of a session), `SchoolClass::prepareAnnouncement()` (the draft campaign for the parents of a class), `SchoolBilling::invoice()` (plan, keep the shares, create the draft invoices) and `SchoolReconcile::queueFixes()`. Adding a student or a session to a class that does not exist is now refused.
-- `llx_school_enrolment` no longer has `fk_commande` and `fk_facture`: an enrolment can give several invoices (one per paying parent), which `llx_school_enrolment_invoice` records. A database created with an earlier build can be updated by hand: `ALTER TABLE llx_school_enrolment DROP COLUMN fk_commande, DROP COLUMN fk_facture;`. Enabling the module again creates the new table.
-- When a student's Chamilo account is created, the classes the student is a member of are updated.
-- A student's enrolment in a session that is not on the Chamilo portal this module talks to now says so, instead of asking to update Chamilo.
-- An email that belongs to a deleted Chamilo account is no longer linked: the account is unusable and keeps its email, so the module reports it instead of linking a dead account.
-- The value of `dolibarr_id` written for teachers is now `user:<id>`. A database that already holds plain ids from an earlier build is corrected by sending the teachers again from the teacher list.
-- `llx_school_course_teacher` and `llx_school_session_teacher` have a `sync_status` column (0 to add in Chamilo, 1 in Chamilo, 3 to remove) instead of `chamilo_link_id`. A database created with an earlier build can be updated by hand:
-
-  ```sql
-  ALTER TABLE llx_school_course_teacher DROP COLUMN chamilo_link_id, ADD COLUMN sync_status smallint DEFAULT 0 NOT NULL;
-  ALTER TABLE llx_school_session_teacher DROP COLUMN chamilo_link_id, ADD COLUMN sync_status smallint DEFAULT 0 NOT NULL;
-  ```
-
-  Run "Create the extra fields" again on the setup page to create the new `dolibarr_id` field of Chamilo users. Enabling the module again creates the new `llx_school_guardian` table; the statuses of `llx_school_enrolment.status` (0 to enrol, 1 enrolled, 3 to remove) and of `llx_school_student_parent.chamilo_follow` (0, 1, 2 to stop) are documented in `sql/llx_school.sql`.
-- Minimum Dolibarr version is now 24.0. The module is meant to be driven through Dolibarr's MCP server as well as through its screens.
-- `llx_school_enrolment.fk_class` is removed. Chamilo enrols the members of a class itself when the class is linked to a session, so Dolibarr keeps no class-derived enrolments. A database created with an earlier build can drop the column by hand:
-
-  ```sql
-  ALTER TABLE llx_school_enrolment DROP COLUMN fk_class;
-  ```
-
-### Fixed
 - A job left running by a crashed run is released after 15 minutes of the database's clock. It was compared with the time in UTC, so on a server whose database is not on UTC it stayed stuck for hours.
 - The test of `schoolWantedUsername()` expected the wrong result for a login with an accented letter (`j doe@école` gives `jdoecole`).
 

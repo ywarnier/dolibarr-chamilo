@@ -46,6 +46,7 @@ Every object that exists on both sides is linked by an id on each side: the Cham
 - [INSTALL.md](INSTALL.md): requirements and installation.
 - [doc/ADMIN_GUIDE.md](doc/ADMIN_GUIDE.md): configuration, rights by screen, the sync queue, MCP set-up, troubleshooting.
 - [doc/USER_GUIDE.md](doc/USER_GUIDE.md): day-to-day use for school staff, every option with its effect in Dolibarr and in Chamilo, and how to use the module through an AI assistant.
+- Languages: `langs/en_US` (the source) and `langs/fr_FR` are written by hand. The other locales are machine translations of en_US that no native speaker has reviewed (`langs/<locale>/school.lang`); a locale without a directory falls back to its main language (`de_AT` to `de_DE`). `php test/cli/lang_check.php` checks every file against en_US.
 - [doc/MCP.md](doc/MCP.md): the reference of the 43 MCP tools. Setting the server up is in the administrator guide, using it in the user guide.
 
 ## Chamilo side

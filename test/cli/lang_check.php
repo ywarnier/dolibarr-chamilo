@@ -44,6 +44,10 @@ function schoolLangRead(string $file): array
 		if (trim($v) === '') {
 			$problems[] = 'empty value for '.$k;
 		}
+		// Dolibarr runs a value through sprintf() when it has arguments: a stray % raises an error in PHP 8.
+		if (preg_match('/%(?!(?:\d+\$)?[sd]|%)/', $v)) {
+			$problems[] = 'stray % in '.$k;
+		}
 		$keys[$k] = $v;
 	}
 	return array('keys' => $keys, 'problems' => $problems);
