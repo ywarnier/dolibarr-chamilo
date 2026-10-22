@@ -98,7 +98,6 @@ SchoolSessionCoaches=Coaches of the session
 SchoolCourseTeachersHelp=The teachers chosen here become teachers of the course in Chamilo.
 SchoolSessionCoachesHelp=For each course of the session, the teachers chosen here become its coaches in this session.
 SchoolNoTeacherYet=No teacher yet. Enable employees as teachers first:
-SchoolSessionHasNoCourse=This session has no course.
 SchoolAssignmentsQueued=Saved. The change reaches Chamilo at the next synchronization.
 
 SchoolStudents=Students
@@ -359,3 +358,4 @@ SchoolReconcileQueued=%s job(s) queued.
 SchoolInvoiceModuleOff=The Invoices module must be enabled to create invoices.
 SchoolSearchCourses=Type a title or a code to find a course
 SchoolSearchCoursesHelp=Type part of the title or of the code to filter the list, click a course to add it, and click its cross to remove it.
+SchoolContinue=Continue

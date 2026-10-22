@@ -30,7 +30,8 @@ require_once __DIR__.'/schoollogic.lib.php';
 function schoolLoadLangs(): void
 {
 	global $langs;
-	$langs->loadLangs(array('school@school'));
+	// The module's own file, and the core files that hold the few words the pages reuse (third party, contact, invoice, create).
+	$langs->loadLangs(array('school@school', 'companies', 'bills', 'products'));
 }
 
 /**

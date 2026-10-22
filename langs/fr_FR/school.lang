@@ -98,7 +98,6 @@ SchoolSessionCoaches=Coachs de la session
 SchoolCourseTeachersHelp=Les enseignants choisis ici deviennent enseignants du cours dans Chamilo.
 SchoolSessionCoachesHelp=Pour chaque cours de la session, les enseignants choisis ici deviennent ses coachs dans cette session.
 SchoolNoTeacherYet=Aucun enseignant pour l'instant. Activez d'abord des employés comme enseignants :
-SchoolSessionHasNoCourse=Cette session n'a aucun cours.
 SchoolAssignmentsQueued=Enregistré. Le changement arrive dans Chamilo à la prochaine synchronisation.
 
 SchoolStudents=Élèves
@@ -359,3 +358,4 @@ SchoolReconcileQueued=%s tâche(s) mise(s) en file.
 SchoolInvoiceModuleOff=Le module Factures doit être activé pour créer des factures.
 SchoolSearchCourses=Tapez un titre ou un code pour trouver un cours
 SchoolSearchCoursesHelp=Tapez une partie du titre ou du code pour filtrer la liste, cliquez sur un cours pour l'ajouter, et sur sa croix pour le retirer.
+SchoolContinue=Continuer

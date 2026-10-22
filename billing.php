@@ -122,7 +122,7 @@ if ($result !== null) {
 	if ($result['errors']) {
 		print '<br><div class="error">'.$langs->trans('SchoolInvoicesFailed').'<br>'.implode('<br>', array_map('dol_escape_htmltag', $result['errors'])).'</div>';
 	}
-	print '<br><a class="butAction" href="'.dol_escape_htmltag($here).'">'.$langs->trans('Continue').'</a>';
+	print '<br><a class="butAction" href="'.dol_escape_htmltag($here).'">'.$langs->trans('SchoolContinue').'</a>';
 	llxFooter();
 	$db->close();
 	exit;
